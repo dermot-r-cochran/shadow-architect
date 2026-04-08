@@ -21,6 +21,7 @@ Usage examples::
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Annotated
@@ -228,17 +229,9 @@ def generate_adversarial(
     for case in result.generated_cases:
         func_name = (
             f"test_adversarial_{case.category.value}_"
-            + case.prompt[:20]
-            .lower()
-            .replace(" ", "_")
-            .replace("'", "")
-            .replace('"', "")
-            .replace(".", "")
-            .replace(",", "")
-            .replace("\\", "")
+            + case.prompt[:20].lower()
         )
-        # Remove non-identifier characters
-        import re
+        # Replace all non-identifier characters with underscores
         func_name = re.sub(r"[^\w]", "_", func_name).strip("_")
 
         stub_lines += [
