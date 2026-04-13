@@ -30,6 +30,10 @@ dev = [
     "ruff>=0.2.0",
     "mypy>=1.8.0",
 ]
+chaos = [
+    # The chaos module uses only stdlib and existing dependencies (httpx,
+    # unittest.mock) – no additional packages are required.
+]
 
 [project.scripts]
 shadow-architect = "shadow_architect.cli:app"
