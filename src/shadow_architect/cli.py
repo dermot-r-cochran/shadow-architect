@@ -259,5 +259,123 @@ def generate_adversarial(
         typer.echo(stub_content)
 
 
+@app.command()
+def chaos(
+    scenarios: Annotated[
+        str,
+        typer.Option(
+            "--scenarios",
+            help=(
+                "Comma-separated list of scenario categories to run: "
+                "corrupt-inputs, security, network (default: all)"
+            ),
+        ),
+    ] = "corrupt-inputs,security,network",
+    target_module: Annotated[
+        Path | None,
+        typer.Option(
+            "--target-module",
+            "-t",
+            help="Optional path to a Python module to focus chaos experiments on",
+            exists=False,
+        ),
+    ] = None,
+    output_json: Annotated[
+        Path | None,
+        typer.Option("--output-json", "-o", help="Write chaos report to this JSON path"),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="List experiments without executing them"),
+    ] = False,
+) -> None:
+    """Run chaos engineering experiments (fault injection) against the framework."""
+    from shadow_architect.chaos import (
+        CorruptInputExperiment,
+        NetworkChaosExperiment,
+        SecurityChaosExperiment,
+    )
+    from shadow_architect.chaos.runner import ChaosRunner
+
+    requested = {s.strip() for s in scenarios.split(",")}
+
+    # Build a minimal target callable – either analyse the specified module or
+    # use a no-op that exercises the framework's own input handling.
+    if target_module is not None and target_module.exists():
+        source = target_module.read_text(encoding="utf-8", errors="replace")
+
+        def _target(value: object = source) -> None:  # type: ignore[assignment]
+            from shadow_architect.core.analyzer import TestStrategyAnalyzer
+            from shadow_architect.core.models import TestSuite
+
+            if not isinstance(value, str):
+                raise TypeError(f"Expected str, got {type(value).__name__}")
+            analyzer = TestStrategyAnalyzer()
+            analyzer.analyze(
+                TestSuite(name="chaos-target", test_files=[str(target_module)])
+            )
+
+    else:
+
+        def _target(value: object = "") -> None:  # type: ignore[assignment]
+            from shadow_architect.core.analyzer import TestStrategyAnalyzer
+            from shadow_architect.core.models import TestSuite
+
+            if not isinstance(value, str):
+                raise TypeError(f"Expected str, got {type(value).__name__}")
+            analyzer = TestStrategyAnalyzer()
+            analyzer.analyze(TestSuite(name="chaos-noop", test_files=[]))
+
+    experiments = []
+    if "corrupt-inputs" in requested:
+        experiments.append(
+            CorruptInputExperiment(
+                target=_target,
+                sample_input="" if target_module is None else source,
+                name="corrupt-inputs",
+            )
+        )
+    if "security" in requested:
+        experiments.append(
+            SecurityChaosExperiment(
+                target=lambda: _target(""),
+                name="security",
+            )
+        )
+    if "network" in requested:
+        experiments.append(
+            NetworkChaosExperiment(
+                target=lambda: _target(""),
+                name="network",
+            )
+        )
+
+    if not experiments:
+        typer.echo(
+            f"No valid scenarios found in: {scenarios!r}. "
+            "Valid options: corrupt-inputs, security, network",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    runner = ChaosRunner(experiments, dry_run=dry_run)
+
+    if dry_run:
+        typer.echo("Dry-run mode — listing experiments without executing:\n")
+        for exp in experiments:
+            typer.echo(f"  • {exp.name}: {exp.description[:80]}")
+        return
+
+    report = runner.run()
+    runner.print_report(report)
+
+    if output_json is not None:
+        runner.write_json(report, output_json)
+        typer.echo(f"\nChaos report written to: {output_json}")
+
+    if report.failed > 0 or report.errors > 0:
+        raise typer.Exit(code=1)
+
+
 if __name__ == "__main__":
     app()
