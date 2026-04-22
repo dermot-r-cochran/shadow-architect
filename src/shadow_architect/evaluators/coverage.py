@@ -1,8 +1,9 @@
-"""Coverage evaluator.
+"""Symbol gap evaluator.
 
-Measures the degree to which source files are exercised by the test suite.
-When source files are provided with their content, this module counts
-function / class definitions and estimates how many are referenced in tests.
+Identifies source symbols (functions, classes) that lack any test reference,
+surfacing components with no containment evidence.  This is a static
+approximation — not a substitute for runtime instrumentation tools — and
+is used to flag gross gaps in boundary coverage.
 """
 
 from __future__ import annotations
@@ -17,7 +18,7 @@ from shadow_architect.core.models import Finding, Severity, TestSuite
 
 @dataclass
 class CoverageResult:
-    """Coverage statistics for a test suite."""
+    """Symbol gap statistics for a test suite."""
 
     total_symbols: int = 0
     covered_symbols: int = 0
@@ -26,19 +27,20 @@ class CoverageResult:
 
     @property
     def coverage_percent(self) -> float:
+        """Proportion of source symbols with test references (0–100)."""
         if self.total_symbols == 0:
             return 100.0
         return round(self.covered_symbols / self.total_symbols * 100, 1)
 
 
 class CoverageEvaluator:
-    """Estimates symbol coverage without running code instrumentation.
+    """Identifies source symbols with no test reference.
 
     A lightweight static approximation: extracts top-level function and class
     names from source files, then checks whether those names appear in any of
-    the test files.  This is not a substitute for runtime coverage tools
-    (e.g., ``coverage.py``) but gives a fast indicator without needing to
-    install or execute the project.
+    the test files.  This is not a substitute for runtime instrumentation
+    (e.g., ``coverage.py``) but provides a fast signal for gross boundary gaps
+    without needing to install or execute the project.
     """
 
     def evaluate(self, suite: TestSuite) -> CoverageResult:

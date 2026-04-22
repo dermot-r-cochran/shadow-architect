@@ -1,10 +1,19 @@
-"""Chaos engineering module for shadow-architect.
+"""Containment testing module for shadow-architect.
 
-Provides fault-injection primitives for resilience testing, covering:
+Provides resilience boundary enforcement through fault injection, verifying
+that the system isolates and surfaces failures rather than propagating or
+silently swallowing them.  Three boundary classes are tested:
 
-- Corrupt inputs (null injection, type confusion, encoding corruption, …)
-- Security permission misalignment (missing credentials, RBAC, expired tokens, …)
-- Network latency and disruption (latency injection, timeouts, intermittent failures, …)
+- Input boundary (corrupt inputs): null injection, type confusion, encoding
+  corruption, boundary values, malformed source, JSON corruption.
+- Credential and authorisation boundary (security): missing credentials, RBAC
+  403/401 responses, expired tokens, wrong tenant/subscription.
+- Infrastructure boundary (network): latency injection, timeouts, connection
+  refused, intermittent failures.
+
+A containment experiment passes when the system isolates the fault and
+surfaces it cleanly.  It fails when the fault propagates, causes silent
+data corruption, or is swallowed without visibility.
 
 Quick start::
 
