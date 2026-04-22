@@ -1,8 +1,12 @@
-"""Coverage evaluator.
+"""Boundary gap detection module.
 
-Measures the degree to which source files are exercised by the test suite.
-When source files are provided with their content, this module counts
-function / class definitions and estimates how many are referenced in tests.
+Identifies source symbols that have no corresponding reference in the test
+suite.  An uncovered symbol is a boundary gap: a component whose behavior
+under constraint conditions has not been verified.
+
+This is a static approximation, not a runtime coverage tool.  It does not
+substitute for instrumented coverage (e.g., coverage.py) but provides a
+fast indicator of which boundaries may be unverified.
 """
 
 from __future__ import annotations
@@ -32,13 +36,12 @@ class CoverageResult:
 
 
 class CoverageEvaluator:
-    """Estimates symbol coverage without running code instrumentation.
+    """Detects boundary gaps by identifying source symbols absent from the test suite.
 
-    A lightweight static approximation: extracts top-level function and class
-    names from source files, then checks whether those names appear in any of
-    the test files.  This is not a substitute for runtime coverage tools
-    (e.g., ``coverage.py``) but gives a fast indicator without needing to
-    install or execute the project.
+    Extracts top-level function and class names from source files, then checks
+    whether those names appear in any test file.  Symbols absent from tests
+    represent unverified boundaries.  This is a static approximation — not a
+    substitute for runtime coverage tools.
     """
 
     def evaluate(self, suite: TestSuite) -> CoverageResult:

@@ -1,7 +1,8 @@
-"""Test strategy analyzer module.
+"""Boundary detection and structural analysis module.
 
-Analyzes an existing test strategy and test suite to identify its structure,
-coverage, and gaps relative to the declared use case or product requirements.
+Analyses an existing test suite to identify its structure, boundary gaps,
+and missing constraint coverage relative to the declared use case or product
+context.  Results feed into boundary enforcement checks downstream.
 """
 
 from __future__ import annotations
@@ -34,7 +35,12 @@ class StrategyAnalysis:
 
     @property
     def assertion_density(self) -> float:
-        """Average assertions per test (a quality indicator)."""
+        """Average assertions per test.
+
+        Used as an indicator of whether tests make observable boundary checks
+        rather than executing silently.  A density below 1.0 suggests tests
+        may pass vacuously without enforcing any constraint.
+        """
         if self.test_count == 0:
             return 0.0
         return self.assertion_count / self.test_count

@@ -1,7 +1,6 @@
 """
-shadow-architect: A meta-testing framework that verifies, validates, and improves
-test strategies and frameworks for any specific use case, technical product, or AI
-capability, hosted in Azure Cloud.
+shadow-architect: Enforces system boundaries, decision gates, and constraints
+for AI-enabled systems.
 """
 
 from shadow_architect.core.analyzer import TestStrategyAnalyzer

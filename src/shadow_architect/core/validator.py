@@ -1,7 +1,8 @@
-"""Test validator module.
+"""Boundary constraint enforcement module.
 
-Validates that a test suite meets a set of quality and completeness criteria,
-returning structured findings for each criterion that is not satisfied.
+Evaluates a test suite against a set of boundary checks, returning structured
+findings for each constraint that is not satisfied. A passing result indicates
+that defined boundaries are enforced — not that the system is correct.
 """
 
 from __future__ import annotations
@@ -15,7 +16,13 @@ from shadow_architect.core.models import Finding, Recommendation, Severity, Test
 
 @dataclass
 class ValidationResult:
-    """Outcome of a validation run."""
+    """Outcome of a boundary enforcement run.
+
+    ``passed`` indicates whether all weighted boundary checks cleared the
+    minimum compliance threshold.  ``score`` is a compliance indicator
+    (0.0–100.0) derived from the weighted boundary checks — it is not a
+    quality score or a safety certificate.
+    """
 
     passed: bool
     score: float  # 0.0 – 100.0
@@ -39,7 +46,12 @@ class ValidationResult:
 
 
 class ValidationCriterion:
-    """Base class for a single validation criterion."""
+    """Base class for a single boundary check.
+
+    Each subclass enforces one boundary condition.  If the condition is not
+    met, the check returns a :class:`~shadow_architect.core.models.Finding`
+    describing the violation.
+    """
 
     id: str = ""
     title: str = ""
@@ -233,7 +245,11 @@ _DEFAULT_CRITERIA: list[ValidationCriterion] = [
 
 
 class TestValidator:
-    """Validates a :class:`StrategyAnalysis` against a configurable set of criteria.
+    """Enforces boundary constraints against a :class:`StrategyAnalysis`.
+
+    Each configured :class:`ValidationCriterion` represents one boundary
+    check.  The resulting :class:`ValidationResult` reports which boundaries
+    were met and which were violated.
 
     Usage::
 
@@ -241,7 +257,7 @@ class TestValidator:
         analysis = analyzer.analyze(suite)
         validator = TestValidator()
         result = validator.validate(analysis)
-        print(result.grade, result.score)
+        print(result.passed, result.score)
     """
 
     def __init__(self, criteria: list[ValidationCriterion] | None = None) -> None:

@@ -1,10 +1,18 @@
-"""Chaos engineering module for shadow-architect.
+"""Containment testing module for shadow-architect.
 
-Provides fault-injection primitives for resilience testing, covering:
+Provides fault-injection primitives that enforce containment boundaries under
+adverse conditions.  Each experiment targets a specific boundary — it is not
+general resilience exploration.
 
-- Corrupt inputs (null injection, type confusion, encoding corruption, …)
-- Security permission misalignment (missing credentials, RBAC, expired tokens, …)
-- Network latency and disruption (latency injection, timeouts, intermittent failures, …)
+- Corrupt inputs: the system must not fail uncontrollably under malformed,
+  null, or adversarial input.
+- Security permission misalignment: the system must not silently succeed when
+  credentials are missing, expired, or insufficient.
+- Network disruption: the system must surface failures from latency, timeout,
+  and connection loss — not swallow them.
+
+An experiment that returns ``FAILED`` status means a containment boundary was
+crossed, not that a metric fell below a threshold.
 
 Quick start::
 

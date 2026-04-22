@@ -1,8 +1,9 @@
-"""Test quality evaluator.
+"""Constraint violation detection module.
 
-Assesses the quality of individual tests beyond simple assertion counting,
-looking for anti-patterns such as over-broad exception catching, bare
-``assert True`` calls, overly long test functions, and missing docstrings.
+Identifies anti-patterns in test code that weaken boundary enforcement:
+tests that pass vacuously (no assertions), tests that silently swallow
+failures (broad exception handling), and tests too large to reliably
+enforce a single constraint.
 """
 
 from __future__ import annotations
@@ -26,14 +27,14 @@ class QualityResult:
 
 
 class QualityEvaluator:
-    """Analyses test files for common quality anti-patterns.
+    """Detects constraint violations in test code by checking for anti-patterns
+    that prevent effective boundary enforcement.
 
     Anti-patterns checked:
 
-    * ``assert True`` / ``assert False`` (meaningless assertion)
-    * Bare ``except`` or ``except Exception`` swallowing errors
-    * Test functions longer than 50 lines (hard to understand)
-    * Test functions with no docstring and no assertions
+    * ``assert True`` / ``assert False`` (assertion enforces nothing)
+    * Bare ``except`` or ``except Exception`` (failures silently swallowed)
+    * Test functions longer than 50 lines (constraint scope unclear)
     """
 
     _MAX_TEST_LINES = 50
