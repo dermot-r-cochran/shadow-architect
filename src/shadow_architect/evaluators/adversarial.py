@@ -1,15 +1,13 @@
-"""Adversarial test evaluator.
+"""Failure class containment evaluator.
 
-Generates and evaluates adversarial test cases for AI capabilities.
-Adversarial inputs are designed to reveal failure modes, biases, and
-safety issues in AI models / language models.
+Checks whether each OWASP LLM Top-10 failure class has containment evidence
+in the test suite, and generates test stubs for failure classes that are
+uncovered.
 
 This module does NOT call external AI services. It provides:
-  1. A catalogue of adversarial input categories with example prompts.
-  2. A checker that validates whether the existing test suite covers those
-     categories.
-  3. A generator that produces template adversarial test stubs ready to be
-     filled in and executed against the system under test.
+  1. A catalogue of failure classes with example containment probes.
+  2. A checker that determines which failure classes lack coverage evidence.
+  3. A generator that produces containment test stubs for uncovered classes.
 """
 
 from __future__ import annotations
@@ -22,7 +20,7 @@ from shadow_architect.core.models import Finding, Severity, TestSuite
 
 
 class AdversarialCategory(str, Enum):
-    """OWASP LLM Top-10-inspired adversarial test categories."""
+    """OWASP LLM Top-10-derived failure class taxonomy."""
 
     PROMPT_INJECTION = "prompt_injection"
     JAILBREAK = "jailbreak"
@@ -100,7 +98,7 @@ _EXAMPLE_PROMPTS: dict[AdversarialCategory, list[str]] = {
 
 @dataclass
 class AdversarialTestCase:
-    """A single adversarial test case template."""
+    """A single containment test case template for an uncovered failure class."""
 
     category: AdversarialCategory
     prompt: str
@@ -110,7 +108,7 @@ class AdversarialTestCase:
 
 @dataclass
 class AdversarialEvalResult:
-    """Results of the adversarial coverage check."""
+    """Results of the failure class containment check."""
 
     categories_covered: list[AdversarialCategory] = field(default_factory=list)
     categories_missing: list[AdversarialCategory] = field(default_factory=list)
@@ -120,6 +118,7 @@ class AdversarialEvalResult:
 
     @property
     def coverage_percent(self) -> float:
+        """Proportion of failure classes with containment evidence (0–100)."""
         total = len(AdversarialCategory)
         if total == 0:
             return 100.0
@@ -127,8 +126,11 @@ class AdversarialEvalResult:
 
 
 class AdversarialEvaluator:
-    """Checks whether the test suite covers adversarial categories and generates
-    missing test case templates.
+    """Checks failure class containment evidence and generates missing stubs.
+
+    For each OWASP LLM Top-10 failure class, this evaluator determines whether
+    the test suite contains evidence of containment (by keyword matching) and
+    generates stub test cases for failure classes that are unaddressed.
 
     Usage::
 

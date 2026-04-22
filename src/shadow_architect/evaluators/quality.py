@@ -1,8 +1,8 @@
-"""Test quality evaluator.
+"""Anti-pattern detector for test constructs that obscure failures.
 
-Assesses the quality of individual tests beyond simple assertion counting,
-looking for anti-patterns such as over-broad exception catching, bare
-``assert True`` calls, overly long test functions, and missing docstrings.
+Identifies test code patterns that suppress, hide, or misrepresent failure
+signals — such as bare ``except`` clauses, trivial constant assertions, and
+test functions too large to have a clear containment intent.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from shadow_architect.core.models import Finding, Severity
 
 @dataclass
 class QualityResult:
-    """Aggregated quality metrics across all analysed test files."""
+    """Aggregated anti-pattern findings across all analysed test files."""
 
     files_evaluated: int = 0
     tests_evaluated: int = 0
@@ -26,14 +26,13 @@ class QualityResult:
 
 
 class QualityEvaluator:
-    """Analyses test files for common quality anti-patterns.
+    """Detects test constructs that obscure or suppress failure signals.
 
     Anti-patterns checked:
 
-    * ``assert True`` / ``assert False`` (meaningless assertion)
-    * Bare ``except`` or ``except Exception`` swallowing errors
-    * Test functions longer than 50 lines (hard to understand)
-    * Test functions with no docstring and no assertions
+    * ``assert True`` / ``assert False`` (assertion provides no containment signal)
+    * Bare ``except`` or ``except Exception`` (failure may be swallowed silently)
+    * Test functions longer than 50 lines (containment intent is unclear)
     """
 
     _MAX_TEST_LINES = 50

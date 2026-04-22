@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "shadow-architect"
 version = "0.1.0"
-description = "A meta-testing framework that verifies, validates, and improves test strategies and frameworks for AI capabilities hosted in Azure Cloud"
+description = "System-level guardrail enforcement for AI systems on Azure Cloud — surfaces constraint violations and gates decisions at defined system boundaries"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
