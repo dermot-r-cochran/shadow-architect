@@ -1,5 +1,8 @@
 """Boundary constraint enforcement module.
 
+Evaluates a test suite against a set of boundary checks, returning structured
+findings for each constraint that is not satisfied. A passing result indicates
+that defined boundaries are enforced — not that the system is correct.
 Evaluates a test suite against declared system boundary constraints, returning
 structured findings for each constraint that is violated.  Each constraint
 represents a boundary condition, not a quality preference.  Violations are
@@ -17,6 +20,13 @@ from shadow_architect.core.models import Finding, Recommendation, Severity, Test
 
 @dataclass
 class ValidationResult:
+    """Outcome of a boundary enforcement run.
+
+    ``passed`` indicates whether all weighted boundary checks cleared the
+    minimum compliance threshold.  ``score`` is a compliance indicator
+    (0.0–100.0) derived from the weighted boundary checks — it is not a
+    quality score or a safety certificate.
+    """
     """Outcome of a boundary constraint enforcement run."""
 
     passed: bool
@@ -41,6 +51,12 @@ class ValidationResult:
 
 
 class ValidationCriterion:
+    """Base class for a single boundary check.
+
+    Each subclass enforces one boundary condition.  If the condition is not
+    met, the check returns a :class:`~shadow_architect.core.models.Finding`
+    describing the violation.
+    """
     """Base class for a single boundary constraint check."""
 
     id: str = ""
@@ -237,6 +253,9 @@ _DEFAULT_CRITERIA: list[ValidationCriterion] = [
 class TestValidator:
     """Enforces boundary constraints against a :class:`StrategyAnalysis`.
 
+    Each configured :class:`ValidationCriterion` represents one boundary
+    check.  The resulting :class:`ValidationResult` reports which boundaries
+    were met and which were violated.
     Each constraint is evaluated as a pass/fail check.  The gate score
     reflects the proportion of constraints satisfied; it is not a quality
     measure.  A score below the configured threshold blocks the release gate.
@@ -247,7 +266,7 @@ class TestValidator:
         analysis = analyzer.analyze(suite)
         validator = TestValidator()
         result = validator.validate(analysis)
-        print(result.grade, result.score)
+        print(result.passed, result.score)
     """
 
     def __init__(self, criteria: list[ValidationCriterion] | None = None) -> None:

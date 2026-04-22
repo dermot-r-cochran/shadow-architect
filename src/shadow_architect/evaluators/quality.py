@@ -1,3 +1,9 @@
+"""Constraint violation detection module.
+
+Identifies anti-patterns in test code that weaken boundary enforcement:
+tests that pass vacuously (no assertions), tests that silently swallow
+failures (broad exception handling), and tests too large to reliably
+enforce a single constraint.
 """Anti-pattern detector for test constructs that obscure failures.
 
 Identifies test code patterns that suppress, hide, or misrepresent failure
@@ -26,6 +32,14 @@ class QualityResult:
 
 
 class QualityEvaluator:
+    """Detects constraint violations in test code by checking for anti-patterns
+    that prevent effective boundary enforcement.
+
+    Anti-patterns checked:
+
+    * ``assert True`` / ``assert False`` (assertion enforces nothing)
+    * Bare ``except`` or ``except Exception`` (failures silently swallowed)
+    * Test functions longer than 50 lines (constraint scope unclear)
     """Detects test constructs that obscure or suppress failure signals.
 
     Anti-patterns checked:

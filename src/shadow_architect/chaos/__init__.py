@@ -1,5 +1,18 @@
 """Containment testing module for shadow-architect.
 
+Provides fault-injection primitives that enforce containment boundaries under
+adverse conditions.  Each experiment targets a specific boundary — it is not
+general resilience exploration.
+
+- Corrupt inputs: the system must not fail uncontrollably under malformed,
+  null, or adversarial input.
+- Security permission misalignment: the system must not silently succeed when
+  credentials are missing, expired, or insufficient.
+- Network disruption: the system must surface failures from latency, timeout,
+  and connection loss — not swallow them.
+
+An experiment that returns ``FAILED`` status means a containment boundary was
+crossed, not that a metric fell below a threshold.
 Provides resilience boundary enforcement through fault injection, verifying
 that the system isolates and surfaces failures rather than propagating or
 silently swallowing them.  Three boundary classes are tested:

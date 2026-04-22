@@ -1,4 +1,9 @@
-"""Core models shared across the shadow-architect framework."""
+"""Core models shared across the shadow-architect framework.
+
+All models operate within a boundary enforcement context: findings represent
+violated constraints, recommendations represent boundary enforcement actions,
+and test suites are the subject of boundary gap detection.
+"""
 
 from __future__ import annotations
 
@@ -48,7 +53,11 @@ class Finding(BaseModel):
 
 
 class Recommendation(BaseModel):
-    """An actionable recommendation to improve test quality."""
+    """A boundary enforcement recommendation.
+
+    Produced when a boundary check identifies a violated or absent constraint.
+    Priority indicates the severity of the boundary gap, not a delivery ranking.
+    """
 
     id: str
     title: str

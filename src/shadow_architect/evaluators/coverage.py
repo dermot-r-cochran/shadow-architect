@@ -1,3 +1,12 @@
+"""Boundary gap detection module.
+
+Identifies source symbols that have no corresponding reference in the test
+suite.  An uncovered symbol is a boundary gap: a component whose behavior
+under constraint conditions has not been verified.
+
+This is a static approximation, not a runtime coverage tool.  It does not
+substitute for instrumented coverage (e.g., coverage.py) but provides a
+fast indicator of which boundaries may be unverified.
 """Symbol gap evaluator.
 
 Identifies source symbols (functions, classes) that lack any test reference,
@@ -34,6 +43,12 @@ class CoverageResult:
 
 
 class CoverageEvaluator:
+    """Detects boundary gaps by identifying source symbols absent from the test suite.
+
+    Extracts top-level function and class names from source files, then checks
+    whether those names appear in any test file.  Symbols absent from tests
+    represent unverified boundaries.  This is a static approximation — not a
+    substitute for runtime coverage tools.
     """Identifies source symbols with no test reference.
 
     A lightweight static approximation: extracts top-level function and class

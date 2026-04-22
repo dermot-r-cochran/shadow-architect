@@ -1,3 +1,15 @@
+"""Failure class and containment boundary checker.
+
+Checks whether the test suite provides coverage for known LLM and agentic
+system failure classes.  Each category represents a containment boundary:
+if the boundary is not covered by at least one check, it is a gap — not a
+coverage metric.
+
+This module does NOT call external AI services. It provides:
+  1. A catalogue of failure classes with example inputs that probe each boundary.
+  2. A checker that identifies which containment boundaries have no corresponding
+     test coverage in the existing suite.
+  3. A generator that produces template test stubs to close identified gaps.
 """Failure class containment evaluator.
 
 Checks whether each OWASP LLM Top-10 failure class has containment evidence
@@ -20,6 +32,12 @@ from shadow_architect.core.models import Finding, Severity, TestSuite
 
 
 class AdversarialCategory(str, Enum):
+    """Failure classes for LLM and agentic systems.
+
+    Each value names a containment boundary.  Coverage of a category means
+    at least one check probes that boundary; absence means the boundary is
+    unverified.
+    """
     """OWASP LLM Top-10-derived failure class taxonomy."""
 
     PROMPT_INJECTION = "prompt_injection"
@@ -126,6 +144,8 @@ class AdversarialEvalResult:
 
 
 class AdversarialEvaluator:
+    """Checks whether the test suite covers known failure class boundaries and
+    generates stub checks for any that are missing.
     """Checks failure class containment evidence and generates missing stubs.
 
     For each OWASP LLM Top-10 failure class, this evaluator determines whether

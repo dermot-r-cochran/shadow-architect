@@ -1,3 +1,8 @@
+"""Boundary detection and structural analysis module.
+
+Analyses an existing test suite to identify its structure, boundary gaps,
+and missing constraint coverage relative to the declared use case or product
+context.  Results feed into boundary enforcement checks downstream.
 """System boundary gap analyzer.
 
 Analyzes an existing test suite to identify structural gaps relative to
@@ -35,6 +40,12 @@ class StrategyAnalysis:
 
     @property
     def assertion_density(self) -> float:
+        """Average assertions per test.
+
+        Used as an indicator of whether tests make observable boundary checks
+        rather than executing silently.  A density below 1.0 suggests tests
+        may pass vacuously without enforcing any constraint.
+        """
         """Average assertions per test — used to detect vacuous tests."""
         if self.test_count == 0:
             return 0.0
