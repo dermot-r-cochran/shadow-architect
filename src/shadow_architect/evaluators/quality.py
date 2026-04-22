@@ -4,6 +4,11 @@ Identifies anti-patterns in test code that weaken boundary enforcement:
 tests that pass vacuously (no assertions), tests that silently swallow
 failures (broad exception handling), and tests too large to reliably
 enforce a single constraint.
+"""Anti-pattern detector for test constructs that obscure failures.
+
+Identifies test code patterns that suppress, hide, or misrepresent failure
+signals — such as bare ``except`` clauses, trivial constant assertions, and
+test functions too large to have a clear containment intent.
 """
 
 from __future__ import annotations
@@ -17,7 +22,7 @@ from shadow_architect.core.models import Finding, Severity
 
 @dataclass
 class QualityResult:
-    """Aggregated quality metrics across all analysed test files."""
+    """Aggregated anti-pattern findings across all analysed test files."""
 
     files_evaluated: int = 0
     tests_evaluated: int = 0
@@ -35,6 +40,13 @@ class QualityEvaluator:
     * ``assert True`` / ``assert False`` (assertion enforces nothing)
     * Bare ``except`` or ``except Exception`` (failures silently swallowed)
     * Test functions longer than 50 lines (constraint scope unclear)
+    """Detects test constructs that obscure or suppress failure signals.
+
+    Anti-patterns checked:
+
+    * ``assert True`` / ``assert False`` (assertion provides no containment signal)
+    * Bare ``except`` or ``except Exception`` (failure may be swallowed silently)
+    * Test functions longer than 50 lines (containment intent is unclear)
     """
 
     _MAX_TEST_LINES = 50

@@ -3,6 +3,11 @@
 Analyses an existing test suite to identify its structure, boundary gaps,
 and missing constraint coverage relative to the declared use case or product
 context.  Results feed into boundary enforcement checks downstream.
+"""System boundary gap analyzer.
+
+Analyzes an existing test suite to identify structural gaps relative to
+declared system boundary requirements.  Gap findings feed directly into
+boundary constraint enforcement (see ``core/validator.py``).
 """
 
 from __future__ import annotations
@@ -41,20 +46,21 @@ class StrategyAnalysis:
         rather than executing silently.  A density below 1.0 suggests tests
         may pass vacuously without enforcing any constraint.
         """
+        """Average assertions per test — used to detect vacuous tests."""
         if self.test_count == 0:
             return 0.0
         return self.assertion_count / self.test_count
 
     @property
     def has_adequate_coverage(self) -> bool:
-        """True when no CRITICAL or HIGH findings exist."""
+        """True when no CRITICAL or HIGH boundary violations exist."""
         return not any(
             f.severity in (Severity.CRITICAL, Severity.HIGH) for f in self.findings
         )
 
 
 class TestStrategyAnalyzer:
-    """Analyzes existing test suites to discover gaps and structural issues.
+    """Detects structural boundary gaps in test suites.
 
     Supports Python test files (pytest / unittest style).  Non-Python test
     artefacts are captured as metadata rather than deep-parsed.

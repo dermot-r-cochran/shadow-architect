@@ -7,6 +7,12 @@ under constraint conditions has not been verified.
 This is a static approximation, not a runtime coverage tool.  It does not
 substitute for instrumented coverage (e.g., coverage.py) but provides a
 fast indicator of which boundaries may be unverified.
+"""Symbol gap evaluator.
+
+Identifies source symbols (functions, classes) that lack any test reference,
+surfacing components with no containment evidence.  This is a static
+approximation — not a substitute for runtime instrumentation tools — and
+is used to flag gross gaps in boundary coverage.
 """
 
 from __future__ import annotations
@@ -21,7 +27,7 @@ from shadow_architect.core.models import Finding, Severity, TestSuite
 
 @dataclass
 class CoverageResult:
-    """Coverage statistics for a test suite."""
+    """Symbol gap statistics for a test suite."""
 
     total_symbols: int = 0
     covered_symbols: int = 0
@@ -30,6 +36,7 @@ class CoverageResult:
 
     @property
     def coverage_percent(self) -> float:
+        """Proportion of source symbols with test references (0–100)."""
         if self.total_symbols == 0:
             return 100.0
         return round(self.covered_symbols / self.total_symbols * 100, 1)
@@ -42,6 +49,13 @@ class CoverageEvaluator:
     whether those names appear in any test file.  Symbols absent from tests
     represent unverified boundaries.  This is a static approximation — not a
     substitute for runtime coverage tools.
+    """Identifies source symbols with no test reference.
+
+    A lightweight static approximation: extracts top-level function and class
+    names from source files, then checks whether those names appear in any of
+    the test files.  This is not a substitute for runtime instrumentation
+    (e.g., ``coverage.py``) but provides a fast signal for gross boundary gaps
+    without needing to install or execute the project.
     """
 
     def evaluate(self, suite: TestSuite) -> CoverageResult:

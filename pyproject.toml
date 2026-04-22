@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "shadow-architect"
 version = "0.1.0"
 description = "Enforces system boundaries, decision gates, and constraints for AI-enabled systems"
+description = "System-level guardrail enforcement for AI systems on Azure Cloud — surfaces constraint violations and gates decisions at defined system boundaries"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

@@ -10,6 +10,16 @@ This module does NOT call external AI services. It provides:
   2. A checker that identifies which containment boundaries have no corresponding
      test coverage in the existing suite.
   3. A generator that produces template test stubs to close identified gaps.
+"""Failure class containment evaluator.
+
+Checks whether each OWASP LLM Top-10 failure class has containment evidence
+in the test suite, and generates test stubs for failure classes that are
+uncovered.
+
+This module does NOT call external AI services. It provides:
+  1. A catalogue of failure classes with example containment probes.
+  2. A checker that determines which failure classes lack coverage evidence.
+  3. A generator that produces containment test stubs for uncovered classes.
 """
 
 from __future__ import annotations
@@ -28,6 +38,7 @@ class AdversarialCategory(str, Enum):
     at least one check probes that boundary; absence means the boundary is
     unverified.
     """
+    """OWASP LLM Top-10-derived failure class taxonomy."""
 
     PROMPT_INJECTION = "prompt_injection"
     JAILBREAK = "jailbreak"
@@ -105,7 +116,7 @@ _EXAMPLE_PROMPTS: dict[AdversarialCategory, list[str]] = {
 
 @dataclass
 class AdversarialTestCase:
-    """A single adversarial test case template."""
+    """A single containment test case template for an uncovered failure class."""
 
     category: AdversarialCategory
     prompt: str
@@ -115,7 +126,7 @@ class AdversarialTestCase:
 
 @dataclass
 class AdversarialEvalResult:
-    """Results of the adversarial coverage check."""
+    """Results of the failure class containment check."""
 
     categories_covered: list[AdversarialCategory] = field(default_factory=list)
     categories_missing: list[AdversarialCategory] = field(default_factory=list)
@@ -125,6 +136,7 @@ class AdversarialEvalResult:
 
     @property
     def coverage_percent(self) -> float:
+        """Proportion of failure classes with containment evidence (0–100)."""
         total = len(AdversarialCategory)
         if total == 0:
             return 100.0
@@ -134,6 +146,11 @@ class AdversarialEvalResult:
 class AdversarialEvaluator:
     """Checks whether the test suite covers known failure class boundaries and
     generates stub checks for any that are missing.
+    """Checks failure class containment evidence and generates missing stubs.
+
+    For each OWASP LLM Top-10 failure class, this evaluator determines whether
+    the test suite contains evidence of containment (by keyword matching) and
+    generates stub test cases for failure classes that are unaddressed.
 
     Usage::
 
