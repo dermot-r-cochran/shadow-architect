@@ -12,7 +12,6 @@ from shadow_architect.core.analyzer import StrategyAnalysis
 from shadow_architect.core.models import Recommendation, Severity
 from shadow_architect.core.validator import ValidationResult
 
-
 _SEVERITY_ORDER: dict[Severity, int] = {
     Severity.CRITICAL: 0,
     Severity.HIGH: 1,

@@ -196,7 +196,10 @@ class TestInputCorruptor:
             if isinstance(v, str):
                 try:
                     compile(v, "<chaos>", "exec")
-                except SyntaxError:
+                except (SyntaxError, ValueError):
+                    # The null-byte variant raises ValueError on Python 3.10
+                    # and SyntaxError from 3.11+ (gh-96670); both mean the
+                    # source failed to compile, which is what this asserts.
                     broken.append(v)
         assert broken, "Expected at least one syntactically broken variant"
 

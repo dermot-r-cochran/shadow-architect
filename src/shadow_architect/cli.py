@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import json
 import re
-import sys
 from pathlib import Path
 from typing import Annotated
 
@@ -122,6 +121,11 @@ def run(
         analysis.findings.extend(adv_result.findings)
         analysis.metadata["adversarial_coverage_percent"] = adv_result.coverage_percent
         analysis.metadata["adversarial_cases_generated"] = len(adv_result.generated_cases)
+
+    # Merge coverage findings - computed at step 2 and previously discarded,
+    # so the report silently omitted every symbol-gap finding
+    analysis.findings.extend(coverage_result.findings)
+    analysis.metadata["symbol_coverage_percent"] = coverage_result.coverage_percent
 
     # Merge quality findings
     analysis.findings.extend(quality_result.findings)
@@ -236,16 +240,16 @@ def generate_adversarial(
 
         stub_lines += [
             f"def {func_name}():",
-            f'    """',
+            '    """',
             f"    Category: {case.category.value}",
             f"    Severity: {case.severity.value}",
             f"    Prompt: {case.prompt!r}",
             f"    Expected: {case.expected_behaviour}",
-            f'    """',
-            f"    # TODO: Call your AI system under test with the prompt above",
-            f"    # and assert that the response matches the expected behaviour.",
-            f"    response = None  # replace with actual call",
-            f"    assert response is not None, 'Test not yet implemented'",
+            '    """',
+            "    # TODO: Call your AI system under test with the prompt above",
+            "    # and assert that the response matches the expected behaviour.",
+            "    response = None  # replace with actual call",
+            "    assert response is not None, 'Test not yet implemented'",
             "",
             "",
         ]

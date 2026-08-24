@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import textwrap
-from pathlib import Path
 
 import pytest
 
@@ -14,7 +13,6 @@ from shadow_architect.evaluators.adversarial import (
 )
 from shadow_architect.evaluators.coverage import CoverageEvaluator
 from shadow_architect.evaluators.quality import QualityEvaluator
-
 
 # ---------------------------------------------------------------------------
 # CoverageEvaluator
@@ -62,9 +60,13 @@ class TestCoverageEvaluator:
 
     def test_uncovered_symbol_flagged(self, tmp_path):
         src = tmp_path / "math_utils.py"
-        src.write_text("def add(a, b):\n    return a + b\n\ndef subtract(a, b):\n    return a - b\n")
+        src.write_text(
+            "def add(a, b):\n    return a + b\n\ndef subtract(a, b):\n    return a - b\n"
+        )
         test_f = tmp_path / "test_only_add.py"
-        test_f.write_text("from math_utils import add\ndef test_add():\n    assert add(1, 2) == 3\n")
+        test_f.write_text(
+            "from math_utils import add\ndef test_add():\n    assert add(1, 2) == 3\n"
+        )
         suite = TestSuite(
             name="partial",
             test_files=[str(test_f)],
