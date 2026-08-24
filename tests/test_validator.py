@@ -8,11 +8,11 @@ from pathlib import Path
 import pytest
 
 from shadow_architect.core.analyzer import TestStrategyAnalyzer
-from shadow_architect.core.models import Severity, TestSuite, TestType
+from shadow_architect.core.models import TestSuite
 from shadow_architect.core.validator import (
+    _DEFAULT_CRITERIA,
     TestValidator,
     ValidationResult,
-    _DEFAULT_CRITERIA,
 )
 
 

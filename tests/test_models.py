@@ -1,6 +1,7 @@
 """Tests for shadow_architect.core.models."""
 
 import pytest
+
 from shadow_architect.core.models import (
     Finding,
     Recommendation,

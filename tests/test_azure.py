@@ -2,18 +2,13 @@
 
 from __future__ import annotations
 
-import json
-import os
-import textwrap
-
 import pytest
 
 from shadow_architect.azure.client import _MockCredential, get_credential
-from shadow_architect.azure.storage import StorageClient
 from shadow_architect.azure.devops import DevOpsClient
-from shadow_architect.core.models import Severity, TestSuite
+from shadow_architect.azure.storage import StorageClient
+from shadow_architect.core.models import TestSuite
 from shadow_architect.core.reporter import TestReport
-
 
 # ---------------------------------------------------------------------------
 # AzureClient

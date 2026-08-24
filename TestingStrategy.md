@@ -58,11 +58,15 @@ any finding they raise here as a bug in one or the other.
 
 ## Known gaps (candidates for next)
 
-- **No CI — the incident above is the argument.** A minimal workflow
-  (checkout, `pip install -e ".[dev]"` + pytest, plus
-  `python -m compileall src` as a cheap parse gate) would have caught both
-  the TOML and the docstring corruption on the day they were introduced. The
-  `local-agent` repo's workflow is the closest template.
+- ~~No CI~~ — **closed 2026-08-24, the day after this document argued for
+  it**: `.github/workflows/ci.yml` runs `python -m compileall src` (the parse
+  gate that would have caught the incident on day one), pytest on Python
+  3.10/3.13 with a coverage ratchet at the measured 89% baseline, and a
+  `ruff check .` job — added green, the outstanding 32 findings fixed in the
+  same change. One of those findings was a real bug, not style: the CLI
+  computed the coverage evaluation and then discarded it, so reports silently
+  omitted every symbol-gap finding; `cli.py` now merges
+  `coverage_result.findings` like its adversarial and quality neighbours.
 - 150 test functions exist but 139 run; the difference is worth an audit
   (skips/parametrisation vs. dead tests).
-- Coverage unmeasured; ratchet it once CI exists.
+- ~~Coverage unmeasured~~ — the CI ratchet above holds it at ≥89%.

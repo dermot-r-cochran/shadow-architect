@@ -12,8 +12,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from jinja2 import Environment, PackageLoader, select_autoescape
-
 from shadow_architect.core.analyzer import StrategyAnalysis
 from shadow_architect.core.improver import ImprovementPlan
 from shadow_architect.core.models import Severity
@@ -162,8 +160,6 @@ class TestReporter:
         """Print a rich summary to the console."""
         try:
             from rich.console import Console
-            from rich.panel import Panel
-            from rich.table import Table
 
             console = Console()
             self._rich_summary(console, report)
@@ -189,7 +185,8 @@ class TestReporter:
                 f"Suite: [cyan]{report.suite_name}[/cyan]  "
                 f"Product: [cyan]{report.product}[/cyan]  "
                 f"Use Case: [cyan]{report.use_case}[/cyan]\n"
-                f"Score: [{score_color}]{report.overall_score:.1f}/100 ({report.grade})[/{score_color}]",
+                f"Score: [{score_color}]{report.overall_score:.1f}/100 "
+                f"({report.grade})[/{score_color}]",
                 title="shadow-architect",
             )
         )
@@ -227,7 +224,7 @@ class TestReporter:
                 console.print(f"  • ({rec.effort}) {rec.title}")
 
     def _plain_summary(self, report: TestReport) -> None:
-        print(f"\n=== shadow-architect: Meta-Testing Report ===")
+        print("\n=== shadow-architect: Meta-Testing Report ===")
         print(f"Suite   : {report.suite_name}")
         print(f"Product : {report.product}")
         print(f"Use Case: {report.use_case}")

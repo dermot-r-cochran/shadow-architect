@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from shadow_architect.core.analyzer import StrategyAnalysis, TestStrategyAnalyzer
+from shadow_architect.core.analyzer import TestStrategyAnalyzer
 from shadow_architect.core.models import Severity, TestSuite, TestType
 
 
