@@ -42,3 +42,28 @@ The tool's identity is settled in the docs, and changes should stay inside it:
 - **Chaos experiments target a specific boundary each** (ADR 005) — corrupt-inputs (input containment), security (credential containment), network (infrastructure failures surfaced, not swallowed).
 
 `docs/BOUNDARIES.md` is the concrete map from each boundary (red lines, tolerable-but-visible states, acceptable variability) to the specific criterion/evaluator/experiment enforcing it — when adding or changing a check, update it in the same change. `docs/STRATEGY.md` carries the full strategy context, including override and escalation protocols. Findings vocabulary throughout: a gap is a *containment boundary gap*, a chaos failure is a *finding*, not a measurement.
+
+## Related repositories
+
+The map of Dermot's public repositories and what crosses between them is
+`RELATED-REPOSITORIES.md` in `dermot-r-cochran/star-rangers`; this section
+names only this repository's own neighbours (added 2026-09-29 at his
+direction). Nothing below shares code or data with this repository; what is
+shared is stated exactly.
+
+- **`dermot-r-cochran/architecture-definition-model`** is the nearest in
+  subject: it defines and governs the architecture of generative-AI systems,
+  where this tool enforces boundaries on them once deployed. Neither
+  repository cites the other today; if one comes to, that is a relationship
+  to record here and there.
+- **Siblings by convention:** `careful-memory`, `world-model`, `foundation-model`,
+  `shadow-architect`, `visual-llm`, `swarm`, `Voting` and
+  `architecture-definition-model` all carry a `TestingStrategy.md` that keeps
+  testing mechanics apart from the repository's rules; six run CI coverage as a
+  ratchet at the measured baseline (`swarm`, `careful-memory`, `world-model`,
+  `foundation-model`, `shadow-architect`, `visual-llm`); five keep
+  architecture decision records with a guard test each (`swarm`,
+  `careful-memory`, `world-model`, `shadow-architect`, the ADM). When a
+  convention here needs changing, those are the reference for how it is done
+  in the account, and a change to the convention itself is worth landing in
+  all of them or in none.
