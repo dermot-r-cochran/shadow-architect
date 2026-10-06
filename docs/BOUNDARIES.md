@@ -1,10 +1,18 @@
-# shadow-architect: System Boundaries
+# shadow-architect: System Boundaries Reference
 
-This document is a concrete reference for the boundaries enforced by shadow-architect. Each boundary maps to a specific check, gate, or containment experiment in the tool.
+This document enumerates the concrete boundary conditions that shadow-architect enforces. For each boundary, it describes the state being constrained, how it is classified, and which check or gate in the tool enforces it.
+
+See [`docs/STRATEGY.md`](STRATEGY.md) for the full strategy context.
 
 ---
 
-## Red Lines — Unacceptable States
+## Red Lines — Unacceptable System States
+
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
 
 These states must never occur. A validation run that leaves any of these unchecked is incomplete.
 
@@ -16,29 +24,7 @@ These states must never occur. A validation run that leaves any of these uncheck
 | Agentic system takes irreversible external action without a human decision gate | `SecurityChaosExperiment`: verifies that credential-absent and permission-denied conditions do not silently succeed. The decision gate itself must be enforced in application code; this experiment confirms it is not bypassed silently. |
 | System fails without surfacing the failure under adversarial input | `CorruptInputExperiment`: verifies that malformed, null, and boundary-value inputs do not produce unhandled exceptions that are silently swallowed. |
 
----
-
-## Tolerable-but-Visible Risk States
-
-These states are permitted under defined conditions but must appear as findings in the validation output. They do not pass silently.
-
-| Risk State | Condition for Tolerance | How It Is Surfaced |
-|---|---|---|
-| Integration tests absent | Early-stage development, declared as a known gap | `IntegrationTestPresenceCriterion`: MEDIUM finding if integration tests are not detected |
-| Adversarial category partially covered | Deferred categories are explicitly named, not silently absent | `AdversarialEvaluator`: lists `categories_missing` in the result; HIGH finding raised |
-| Hallucination or factual error in non-binding output | System does not present output as verified; no downstream decision depends on the output | `AdversarialEvaluator`: checks `HALLUCINATION` category; HIGH finding if uncovered |
-| Missing test isolation (mocks absent) | Suite has ≤5 tests | `TestIsolationCriterion` and `QualityEvaluator`: LOW finding surfaced for larger suites |
-| Source symbols without corresponding test references | Components not declared as boundary-critical | `CoverageEvaluator`: MEDIUM finding if symbol coverage falls below 80% |
-| Tests with broad exception handling | Explicitly acknowledged as a known structural issue | `QualityEvaluator`: finding raised for each `except Exception` or bare `except` detected |
-# shadow-architect: System Boundaries Reference
-
-This document enumerates the concrete boundary conditions that shadow-architect enforces. For each boundary, it describes the state being constrained, how it is classified, and which check or gate in the tool enforces it.
-
-See [`docs/STRATEGY.md`](STRATEGY.md) for the full strategy context.
-
----
-
-## Red Lines — Unacceptable System States
+**Version B**
 
 These states must never occur at release. The gate does not open while any red-line violation is present.
 
@@ -85,6 +71,25 @@ Also enforced by: `AdversarialEvaluator` in `evaluators/adversarial.py`, which c
 ---
 
 ## Tolerable but Visible Risk States
+
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
+These states are permitted under defined conditions but must appear as findings in the validation output. They do not pass silently.
+
+| Risk State | Condition for Tolerance | How It Is Surfaced |
+|---|---|---|
+| Integration tests absent | Early-stage development, declared as a known gap | `IntegrationTestPresenceCriterion`: MEDIUM finding if integration tests are not detected |
+| Adversarial category partially covered | Deferred categories are explicitly named, not silently absent | `AdversarialEvaluator`: lists `categories_missing` in the result; HIGH finding raised |
+| Hallucination or factual error in non-binding output | System does not present output as verified; no downstream decision depends on the output | `AdversarialEvaluator`: checks `HALLUCINATION` category; HIGH finding if uncovered |
+| Missing test isolation (mocks absent) | Suite has ≤5 tests | `TestIsolationCriterion` and `QualityEvaluator`: LOW finding surfaced for larger suites |
+| Source symbols without corresponding test references | Components not declared as boundary-critical | `CoverageEvaluator`: MEDIUM finding if symbol coverage falls below 80% |
+| Tests with broad exception handling | Explicitly acknowledged as a known structural issue | `QualityEvaluator`: finding raised for each `except Exception` or bare `except` detected |
+
+**Version B**
 
 These states are permitted at release but must appear as MEDIUM or HIGH findings in every report. They may not be silently ignored or suppressed.
 
@@ -164,6 +169,12 @@ Also detected by: `TestStrategyAnalyzer` in `core/analyzer.py`. Finding ID: `no-
 
 ## Acceptable Variability
 
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
 These vary without triggering findings or requiring escalation:
 
 | Variable | Why It Is Acceptable |
@@ -174,6 +185,19 @@ These vary without triggering findings or requiring escalation:
 | Fixture implementation style | Fixtures are counted but not validated for correctness |
 | Coverage percentage in non-boundary-critical source files | Only components whose failure has boundary-level impact require coverage tracking |
 | Parameter count in parametrized tests | The tool detects parametrization presence; parameter count is not enforced |
+
+**Version B**
+
+The following are not constrained and do not produce findings:
+
+- Test function naming conventions beyond the `test_` prefix.
+- Choice of assertion library.
+- File structure within the test directory.
+- Number of tests per file.
+- Use of async vs synchronous test functions.
+- Docstring presence or style in test functions.
+- Test execution order.
+- Choice of mocking library (unittest.mock, pytest-mock, etc.) beyond presence detection.
 
 ---
 
@@ -204,16 +228,6 @@ This table maps each boundary to the specific validator criterion, evaluator, or
 | Uncovered source symbols (boundary gap detection) | `CoverageEvaluator` | `low-symbol-coverage` |
 | Vacuous assertions (constraint enforcement absent) | `QualityEvaluator` | `trivial-assert-*` |
 | Silent failure swallowing | `QualityEvaluator` | `bare-except-*`, `broad-except-*` |
-The following are not constrained and do not produce findings:
-
-- Test function naming conventions beyond the `test_` prefix.
-- Choice of assertion library.
-- File structure within the test directory.
-- Number of tests per file.
-- Use of async vs synchronous test functions.
-- Docstring presence or style in test functions.
-- Test execution order.
-- Choice of mocking library (unittest.mock, pytest-mock, etc.) beyond presence detection.
 
 ---
 

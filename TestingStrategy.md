@@ -33,6 +33,7 @@ its components:
 | `test_improver.py` | the improvement/generation path |
 | `test_azure.py` | Azure-facing integration surfaces |
 | `test_cli.py` | the Typer CLI |
+| `test_adr_guards.py` | ADR guard tests — so far ADR 002 only (`run --fail-on` gates on findings, not the score) |
 | + 2 further files | remaining modules |
 
 Run: `pip install -e ".[dev]"` (or `PYTHONPATH=src`) then `pytest`

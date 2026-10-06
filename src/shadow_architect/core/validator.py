@@ -1,12 +1,10 @@
 """Boundary constraint enforcement module.
 
 Evaluates a test suite against a set of boundary checks, returning structured
-findings for each constraint that is not satisfied. A passing result indicates
-that defined boundaries are enforced — not that the system is correct.
-Evaluates a test suite against declared system boundary constraints, returning
-structured findings for each constraint that is violated.  Each constraint
+findings for each constraint that is not satisfied.  Each constraint
 represents a boundary condition, not a quality preference.  Violations are
-pass/fail — not scored.
+pass/fail — not scored.  A passing result indicates that defined boundaries
+are enforced — not that the system is correct.
 """
 
 from __future__ import annotations
@@ -27,7 +25,6 @@ class ValidationResult:
     (0.0–100.0) derived from the weighted boundary checks — it is not a
     quality score or a safety certificate.
     """
-    """Outcome of a boundary constraint enforcement run."""
 
     passed: bool
     score: float  # 0.0 – 100.0
@@ -57,7 +54,6 @@ class ValidationCriterion:
     met, the check returns a :class:`~shadow_architect.core.models.Finding`
     describing the violation.
     """
-    """Base class for a single boundary constraint check."""
 
     id: str = ""
     title: str = ""
@@ -256,6 +252,7 @@ class TestValidator:
     Each configured :class:`ValidationCriterion` represents one boundary
     check.  The resulting :class:`ValidationResult` reports which boundaries
     were met and which were violated.
+
     Each constraint is evaluated as a pass/fail check.  The gate score
     reflects the proportion of constraints satisfied; it is not a quality
     measure.  A score below the configured threshold blocks the release gate.

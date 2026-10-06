@@ -20,18 +20,20 @@ Usage examples::
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import re
+from enum import Enum
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
-from shadow_architect.core.analyzer import TestStrategyAnalyzer
+from shadow_architect.core.analyzer import StrategyAnalysis, TestStrategyAnalyzer
 from shadow_architect.core.improver import TestImprover
-from shadow_architect.core.models import TestSuite
+from shadow_architect.core.models import Severity, TestSuite
 from shadow_architect.core.reporter import TestReporter
-from shadow_architect.core.validator import TestValidator
+from shadow_architect.core.validator import TestValidator, ValidationResult
 from shadow_architect.evaluators.adversarial import AdversarialEvaluator
 from shadow_architect.evaluators.coverage import CoverageEvaluator
 from shadow_architect.evaluators.quality import QualityEvaluator
@@ -41,6 +43,29 @@ app = typer.Typer(
     help="Meta-testing framework for AI capabilities on Azure Cloud.",
     add_completion=False,
 )
+
+
+class FailOn(str, Enum):
+    """Finding severity at which ``run --fail-on`` exits with code 1."""
+
+    CRITICAL = "critical"
+    HIGH = "high"
+
+
+def _fails_on(
+    analysis: StrategyAnalysis, validation: ValidationResult, fail_on: FailOn
+) -> bool:
+    """True when any analysis or validation finding meets *fail_on*.
+
+    A gate on findings, not on the score (ADRs 001 and 002): a run can pass
+    ``--fail-below`` and still fail here.
+    """
+    combined = dataclasses.replace(
+        analysis, findings=[*analysis.findings, *validation.findings]
+    )
+    if fail_on is FailOn.HIGH:
+        return not combined.has_adequate_coverage
+    return any(f.severity is Severity.CRITICAL for f in combined.findings)
 
 
 @app.command()
@@ -82,6 +107,17 @@ def run(
             help="Exit with code 1 if validation score falls below this threshold",
         ),
     ] = 0.0,
+    fail_on: Annotated[
+        FailOn | None,
+        typer.Option(
+            "--fail-on",
+            case_sensitive=False,
+            help=(
+                "Exit with code 1 if any finding is at this severity or above "
+                "(critical, or high which includes critical). Off by default."
+            ),
+        ),
+    ] = None,
     adversarial: Annotated[
         bool,
         typer.Option(
@@ -152,6 +188,14 @@ def run(
         typer.echo(
             f"\nValidation score {validation.score:.1f} is below "
             f"threshold {fail_below:.1f}. Exiting with code 1.",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    if fail_on is not None and _fails_on(analysis, validation, fail_on):
+        typer.echo(
+            f"\nAt least one finding is {fail_on.value.upper()} or above "
+            f"(--fail-on {fail_on.value}). Exiting with code 1.",
             err=True,
         )
         raise typer.Exit(code=1)
