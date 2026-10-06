@@ -29,7 +29,7 @@ CI (`.github/workflows/ci.yml`) runs the parse gate, pytest with the coverage ra
 - **`evaluators/`** — `coverage.py` (untested symbols as uncovered boundaries), `quality.py` (anti-patterns that hide failures, e.g. bare `except`), `adversarial.py` (checks each OWASP LLM Top-10 failure class for containment evidence in the suite; absence is a finding).
 - **`azure/`** — `client.py` (credential management, honours `SHADOW_ARCHITECT_MOCK_AZURE`), `storage.py` (Blob Storage report upload), `devops.py` (Test Plans + Work Items for CRITICAL/HIGH findings).
 - **`chaos/`** — containment testing, not general resilience exploration (ADR 005): `base.py` (abstract `ChaosExperiment`: setup/execute/teardown, `AssertionError` in execute means the fault was *not* contained), three experiments (`corrupt_inputs.py`, `security.py`, `network.py`), `runner.py` (`ChaosRunner` orchestrator), `models.py` (ChaosResult/ChaosReport).
-- **`cli.py`** — Typer commands: `run` (analyse + validate, `--fail-below` gates CI), `generate-adversarial` (test stubs for uncovered failure classes), `upload` (report to Blob Storage), `chaos` (`--scenarios`, `--dry-run`).
+- **`cli.py`** — Typer commands: `run` (analyse + validate; `--fail-on critical|high` exits 1 on findings at that severity, `--fail-below` on the score), `generate-adversarial` (test stubs for uncovered failure classes), `upload` (report to Blob Storage), `chaos` (`--scenarios`, `--dry-run`).
 
 ## Governing ideas
 
@@ -62,8 +62,10 @@ shared is stated exactly.
   testing mechanics apart from the repository's rules; six run CI coverage as a
   ratchet at the measured baseline (`swarm`, `careful-memory`, `world-model`,
   `foundation-model`, `shadow-architect`, `visual-llm`); five keep
-  architecture decision records with a guard test each (`swarm`,
-  `careful-memory`, `world-model`, `shadow-architect`, the ADM). When a
+  architecture decision records with guard tests (`swarm`,
+  `careful-memory`, `world-model`, `shadow-architect`, the ADM); here
+  `tests/test_adr_guards.py` guards ADR 002 (gate on finding severity, not
+  the score), and ADRs 001 and 003–005 do not yet have a guard test. When a
   convention here needs changing, those are the reference for how it is done
   in the account, and a change to the convention itself is worth landing in
   all of them or in none.

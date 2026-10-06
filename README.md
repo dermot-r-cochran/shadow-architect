@@ -16,6 +16,7 @@ Instead, it exists to make explicit:
 - and where human judgment is required before proceeding.
 
 Tests, checks, and reviews referenced here exist to enforce these boundaries empirically when formal guarantees are infeasible.
+
 **shadow-architect** enforces system-level guardrails on AI systems. It is not a test quality scorer. It does not measure coverage percentages or rank delivery velocity. It exists to surface constraint violations, gate decisions at defined boundaries, and make failure modes visible before they become irreversible.
 
 It operates on Python test suites and system artefacts to:
@@ -33,12 +34,17 @@ It operates on Python test suites and system artefacts to:
 
 ## System Boundaries and Red Lines
 
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
 Boundaries fall into three categories:
 
 ### (a) Unacceptable States — Must Never Occur
 
 These are hard stops. No deployment, escalation path, or override process compensates for reaching these states:
-### Enforce boundaries on a test suite
 
 - Prompt injection achieving instruction override in a deployed AI capability
 - Sensitive data (PII, credentials, system prompts) disclosed via model output
@@ -46,12 +52,10 @@ These are hard stops. No deployment, escalation path, or override process compen
 - Unsafe model output (executable code, injection payloads) reaching a downstream consumer without sanitisation
 
 These are enforced by the adversarial evaluator and security containment checks. A validation run that leaves any of these unchecked does not pass.
-### Gate CI on constraint violations
 
 ### (b) Risky but Tolerable — Must Be Visible and Bounded
 
 These states are permitted under monitored conditions with defined containment:
-### Generate containment stubs for uncovered failure classes
 
 - Hallucination or factual error in low-stakes, non-binding output — tolerable if grounded response is not claimed
 - Integration test absence in early-stage development — tolerable if the boundary is declared and tracked as a finding
@@ -68,130 +72,8 @@ These are expected to vary without requiring escalation:
 - Test file naming conventions
 - Coverage percentages in source files not declared as boundary-critical
 - Choice of mocking library or fixture style
-```bash
-export AZURE_STORAGE_ACCOUNT_URL="https://<account>.blob.core.windows.net"
-shadow-architect upload report.json --suite "My AI Service"
-```
 
----
-
-## Decisions Subject to Gating
-
-The following decisions are gated. This tool enforces or surfaces the gate condition. They cannot proceed on advisory review alone.
-
-| Decision | Gate Condition |
-|---|---|
-| Deploying an AI capability to external users | Adversarial test coverage must include prompt injection, data exfiltration, and insecure output categories |
-| Enabling agentic autonomy (write/execute/publish) | Human decision gate must be explicit in code; containment experiments must have passed |
-| Releasing after a validation run with CRITICAL findings | Not permitted without explicit override — see [Override and Escalation Protocols](#override-and-escalation-protocols) |
-| Exposing an endpoint that processes untrusted input | Security test presence check must pass |
-
-These are gates, not recommendations. A passing score does not override a failed gate condition.
-
----
-
-## Failure Classes and Containment Boundaries
-
-The adversarial evaluator checks coverage across failure classes relevant to LLM and agentic systems. These are not checklist items — they are categories of containment failure:
-
-| Failure Class | Containment Boundary |
-|---|---|
-| **Prompt Injection** | Model must not execute injected instructions; boundary is instruction integrity |
-| **Jailbreak** | Model must not bypass its defined behavioral constraints |
-| **Data Exfiltration** | System prompt, training data, and PII must not be surfaced via model output |
-| **Insecure Output** | Executable or injection-capable content must not reach downstream consumers |
-| **Hallucination** | Model must not present fabricated facts as verified; boundary is epistemic honesty |
-| **Denial of Service** | Resource consumption must be bounded; requests beyond limits must be rejected |
-| **Bias** | Responses must not reinforce demographic or group-based harm |
-| **Sensitive Information Disclosure** | PII, credentials, and internal configuration must not be disclosed |
-
-A gap in any of these categories is a containment boundary gap, not a coverage gap.
-
----
-
-## Evidence We Require Before Release
-
-Before a system governed by this tool is released, the following must be present and documented:
-
-1. A completed validation run with no CRITICAL findings unresolved
-2. Adversarial coverage for all high-severity failure classes (prompt injection, data exfiltration, insecure output, sensitive info disclosure)
-3. Security test presence for any system handling untrusted input or external credentials
-4. Containment experiment results showing that corrupt-input, security-permission, and network-disruption scenarios do not produce unhandled failures
-5. An explicit record of any overridden gate, including who accepted the risk and under what conditions
-
-Evidence is empirical, not declarative. Stating that a boundary holds is not evidence that it holds.
-
----
-
-## What This Strategy Does NOT Claim
-
-This tool does not:
-
-- **Prove correctness.** Passing validation means defined boundaries were enforced. It does not mean the system behaves correctly in all cases.
-- **Exhaustively test behavior.** Test coverage is not a proxy for safety. Untested behavior exists regardless of score.
-- **Certify safety in the abstract.** No score, grade, or passing result is a safety certificate.
-- **Encode ethics or values.** The bias and sensitive disclosure checks probe for specific failure classes. They do not encode a complete ethical framework.
-- **Guarantee predictable behavior in agentic systems.** Composition and emergent behavior are primary risks that static checks cannot fully enumerate.
-
-Where formal verification is infeasible, this tool provides empirical boundary enforcement. Testing is evidence, not proof.
-
----
-
-## Override and Escalation Protocols
-
-A gate can be overridden only under the following conditions:
-
-1. The override is explicit — not implied by silence, skip, or configuration change
-2. The person accepting the override acknowledges the specific risk in writing (commit message, PR description, or linked issue)
-3. The override is time-bounded — it applies to a named release or deployment, not indefinitely
-4. The override is visible in the audit trail — it must appear in the validation report metadata
-
-Override does not remove the gate. It records that the gate was bypassed and by whom.
-
-If a CRITICAL finding exists and cannot be resolved, the deployment is escalated to a human decision. The tool surfaces the finding; it does not make the deployment decision.
-
----
-
-## Containment Testing
-
-The `chaos` module enforces containment boundaries under adverse conditions. It is not general resilience exploration — each experiment targets a specific boundary:
-
-| Experiment | Boundary Enforced |
-|---|---|
-| `corrupt-inputs` | System must handle malformed, null, and adversarial inputs without uncontrolled failure |
-| `security` | System must not silently succeed when credentials are missing, expired, or insufficient |
-| `network` | System must surface failures from latency, timeout, and connection disruption — not swallow them |
-
-A containment experiment that fails (returns `FAILED` status) indicates the boundary was crossed. This is a finding, not a measurement.
-```
-shadow_architect/
-├── core/
-│   ├── models.py        # Shared data models (Finding, Recommendation, TestSuite, …)
-│   ├── analyzer.py      # Static analysis — detects structural gaps and missing boundaries
-│   ├── validator.py     # Boundary constraint enforcement — pass/fail, not scored
-│   ├── improver.py      # Constraint remediation plan generation
-│   └── reporter.py      # JSON + rich console reporting
-├── evaluators/
-│   ├── coverage.py      # Symbol-level gap detection (unchecked components)
-│   ├── quality.py       # Anti-pattern detection (constructs that hide failures)
-│   └── adversarial.py   # Failure class coverage: OWASP LLM Top-10 containment check
-├── azure/
-│   ├── client.py        # Azure credential management
-│   ├── storage.py       # Azure Blob Storage integration
-│   └── devops.py        # Azure DevOps Test Plans & Work Items
-├── chaos/
-│   ├── models.py        # ChaosResult / ChaosReport Pydantic models
-│   ├── base.py          # Abstract ChaosExperiment base class
-│   ├── corrupt_inputs.py# InputCorruptor + CorruptInputExperiment
-│   ├── security.py      # PermissionChaos + SecurityChaosExperiment
-│   ├── network.py       # NetworkChaos + NetworkChaosExperiment
-│   └── runner.py        # ChaosRunner orchestrator
-└── cli.py               # Typer-based CLI
-```
-
----
-
-## System Boundaries and Red Lines
+**Version B**
 
 These are the constraints this tool enforces. They are not advisory. Violations at the CRITICAL level gate release.
 
@@ -209,7 +91,62 @@ Detailed boundary definitions are in [`docs/BOUNDARIES.md`](docs/BOUNDARIES.md).
 
 ---
 
+## Decisions Subject to Gating
+
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
+The following decisions are gated. This tool enforces or surfaces the gate condition. They cannot proceed on advisory review alone.
+
+| Decision | Gate Condition |
+|---|---|
+| Deploying an AI capability to external users | Adversarial test coverage must include prompt injection, data exfiltration, and insecure output categories |
+| Enabling agentic autonomy (write/execute/publish) | Human decision gate must be explicit in code; containment experiments must have passed |
+| Releasing after a validation run with CRITICAL findings | Not permitted without explicit override — see [Override and Escalation Protocols](#override-and-escalation-protocols) |
+| Exposing an endpoint that processes untrusted input | Security test presence check must pass |
+
+These are gates, not recommendations. A passing score does not override a failed gate condition.
+
+**Version B**
+
+The following decision classes are **gated**: release is blocked unless the required evidence is present.
+
+1. **Irreversible decisions** — Any action that cannot be rolled back (e.g., data deletion, tenant-level configuration changes). Requires explicit adversarial and isolation test evidence before gate passes.
+2. **External exposure** — Any component that accepts or emits data across a trust boundary (API endpoints, LLM prompt construction, output rendering). Requires security and insecure-output containment evidence.
+3. **Agentic autonomy expansion** — Any change that increases an agent's capability scope, tool access, or action authority. Requires adversarial coverage of the new capability class before gate passes.
+4. **Non-rollbackable failure modes** — Failure modes that cannot be silently rolled back (credential leakage, schema mutations, irreversible external writes). These trigger escalation regardless of overall constraint score.
+
+Gating is enforced via `--fail-below` in CI. The default gate threshold is documented in [`docs/STRATEGY.md`](docs/STRATEGY.md).
+
+---
+
 ## Failure Classes and Containment Boundaries
+
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
+The adversarial evaluator checks coverage across failure classes relevant to LLM and agentic systems. These are not checklist items — they are categories of containment failure:
+
+| Failure Class | Containment Boundary |
+|---|---|
+| **Prompt Injection** | Model must not execute injected instructions; boundary is instruction integrity |
+| **Jailbreak** | Model must not bypass its defined behavioral constraints |
+| **Data Exfiltration** | System prompt, training data, and PII must not be surfaced via model output |
+| **Insecure Output** | Executable or injection-capable content must not reach downstream consumers |
+| **Hallucination** | Model must not present fabricated facts as verified; boundary is epistemic honesty |
+| **Denial of Service** | Resource consumption must be bounded; requests beyond limits must be rejected |
+| **Bias** | Responses must not reinforce demographic or group-based harm |
+| **Sensitive Information Disclosure** | PII, credentials, and internal configuration must not be disclosed |
+
+A gap in any of these categories is a containment boundary gap, not a coverage gap.
+
+**Version B**
 
 The adversarial evaluator checks whether each OWASP LLM Top-10 failure class has containment evidence in the test suite. Absence is a finding, not a recommendation.
 
@@ -226,20 +163,25 @@ The adversarial evaluator checks whether each OWASP LLM Top-10 failure class has
 
 ---
 
-## Decisions Subject to Gating
-
-The following decision classes are **gated**: release is blocked unless the required evidence is present.
-
-1. **Irreversible decisions** — Any action that cannot be rolled back (e.g., data deletion, tenant-level configuration changes). Requires explicit adversarial and isolation test evidence before gate passes.
-2. **External exposure** — Any component that accepts or emits data across a trust boundary (API endpoints, LLM prompt construction, output rendering). Requires security and insecure-output containment evidence.
-3. **Agentic autonomy expansion** — Any change that increases an agent's capability scope, tool access, or action authority. Requires adversarial coverage of the new capability class before gate passes.
-4. **Non-rollbackable failure modes** — Failure modes that cannot be silently rolled back (credential leakage, schema mutations, irreversible external writes). These trigger escalation regardless of overall constraint score.
-
-Gating is enforced via `--fail-below` in CI. The default gate threshold is documented in [`docs/STRATEGY.md`](docs/STRATEGY.md).
-
----
-
 ## Evidence We Require Before Release
+
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
+Before a system governed by this tool is released, the following must be present and documented:
+
+1. A completed validation run with no CRITICAL findings unresolved
+2. Adversarial coverage for all high-severity failure classes (prompt injection, data exfiltration, insecure output, sensitive info disclosure)
+3. Security test presence for any system handling untrusted input or external credentials
+4. Containment experiment results showing that corrupt-input, security-permission, and network-disruption scenarios do not produce unhandled failures
+5. An explicit record of any overridden gate, including who accepted the risk and under what conditions
+
+Evidence is empirical, not declarative. Stating that a boundary holds is not evidence that it holds.
+
+**Version B**
 
 The following must be present and passing before a release gate opens:
 
@@ -252,7 +194,55 @@ The following must be present and passing before a release gate opens:
 
 ---
 
+## What This Strategy Does NOT Claim
+
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
+This tool does not:
+
+- **Prove correctness.** Passing validation means defined boundaries were enforced. It does not mean the system behaves correctly in all cases.
+- **Exhaustively test behavior.** Test coverage is not a proxy for safety. Untested behavior exists regardless of score.
+- **Certify safety in the abstract.** No score, grade, or passing result is a safety certificate.
+- **Encode ethics or values.** The bias and sensitive disclosure checks probe for specific failure classes. They do not encode a complete ethical framework.
+- **Guarantee predictable behavior in agentic systems.** Composition and emergent behavior are primary risks that static checks cannot fully enumerate.
+
+Where formal verification is infeasible, this tool provides empirical boundary enforcement. Testing is evidence, not proof.
+
+**Version B** (headed *Failure Classes We Intentionally Ignore*)
+
+This strategy does not attempt to:
+
+- **Prove correctness.** Tests are empirical enforcement of boundaries, not approximations of proof. A passing gate means the declared constraints were not visibly violated, not that the system is correct.
+- **Exhaustively test behaviour.** The strategy targets failure classes at boundaries, not all possible inputs. Combinatorial exhaustion is not the goal.
+- **Encode ethics or values.** The bias and sensitive-disclosure checks enforce observable boundary conditions, not ethical judgements. Where formal verification is infeasible, we test boundary enforcement empirically.
+- **Replace runtime monitoring.** Static analysis and offline test suites cannot detect all runtime failure modes. This tool is a pre-release gate, not a substitute for observability.
+
+---
+
 ## Override and Escalation Protocols
+
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
+A gate can be overridden only under the following conditions:
+
+1. The override is explicit — not implied by silence, skip, or configuration change
+2. The person accepting the override acknowledges the specific risk in writing (commit message, PR description, or linked issue)
+3. The override is time-bounded — it applies to a named release or deployment, not indefinitely
+4. The override is visible in the audit trail — it must appear in the validation report metadata
+
+Override does not remove the gate. It records that the gate was bypassed and by whom.
+
+If a CRITICAL finding exists and cannot be resolved, the deployment is escalated to a human decision. The tool surfaces the finding; it does not make the deployment decision.
+
+**Version B**
 
 Gating decisions can be overridden under the following conditions:
 
@@ -264,18 +254,25 @@ Gating decisions can be overridden under the following conditions:
 
 ---
 
-## Failure Classes We Intentionally Ignore
+## Containment Testing
 
-This strategy does not attempt to:
+### Two versions, to be reconciled
 
-- **Prove correctness.** Tests are empirical enforcement of boundaries, not approximations of proof. A passing gate means the declared constraints were not visibly violated, not that the system is correct.
-- **Exhaustively test behaviour.** The strategy targets failure classes at boundaries, not all possible inputs. Combinatorial exhaustion is not the goal.
-- **Encode ethics or values.** The bias and sensitive-disclosure checks enforce observable boundary conditions, not ethical judgements. Where formal verification is infeasible, we test boundary enforcement empirically.
-- **Replace runtime monitoring.** Static analysis and offline test suites cannot detect all runtime failure modes. This tool is a pre-release gate, not a substitute for observability.
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
 
----
+**Version A**
 
-## Chaos Engineering: Containment Testing
+The `chaos` module enforces containment boundaries under adverse conditions. It is not general resilience exploration — each experiment targets a specific boundary:
+
+| Experiment | Boundary Enforced |
+|---|---|
+| `corrupt-inputs` | System must handle malformed, null, and adversarial inputs without uncontrolled failure |
+| `security` | System must not silently succeed when credentials are missing, expired, or insufficient |
+| `network` | System must surface failures from latency, timeout, and connection disruption — not swallow them |
+
+A containment experiment that fails (returns `FAILED` status) indicates the boundary was crossed. This is a finding, not a measurement.
+
+**Version B** (headed *Chaos Engineering: Containment Testing*)
 
 The `chaos` module validates **resilience boundaries** — whether the system contains and surfaces failures gracefully rather than propagating or silently swallowing them.
 
@@ -290,7 +287,6 @@ A chaos experiment **passes** when the system isolates the fault and surfaces it
 ### CLI usage
 
 ```bash
-# Run all containment experiments
 # Run all containment scenarios
 shadow-architect chaos
 
@@ -380,6 +376,15 @@ shadow-architect run \
 shadow-architect run --suite "My Service" --test-files tests/ --fail-below 70
 ```
 
+[ADR 001](docs/adr/001-boundary-enforcement-over-quality-scoring.md) forbids using this score as a delivery gate; to gate CI on the findings themselves, use `--fail-on` below.
+
+### Gate CI on constraint violations
+
+```bash
+# exit 1 if any finding is HIGH or above (or: --fail-on critical); off by default
+shadow-architect run --suite "My Service" --test-files tests/ --fail-on high
+```
+
 ### Generate adversarial test stubs
 
 ```bash
@@ -401,6 +406,40 @@ shadow-architect upload report.json --suite "My AI Service"
 ---
 
 ## Architecture
+
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
+```
+shadow_architect/
+├── core/
+│   ├── models.py        # Shared data models (Finding, Recommendation, TestSuite, …)
+│   ├── analyzer.py      # Static analysis — detects structural gaps and missing boundaries
+│   ├── validator.py     # Boundary constraint enforcement — pass/fail, not scored
+│   ├── improver.py      # Constraint remediation plan generation
+│   └── reporter.py      # JSON + rich console reporting
+├── evaluators/
+│   ├── coverage.py      # Symbol-level gap detection (unchecked components)
+│   ├── quality.py       # Anti-pattern detection (constructs that hide failures)
+│   └── adversarial.py   # Failure class coverage: OWASP LLM Top-10 containment check
+├── azure/
+│   ├── client.py        # Azure credential management
+│   ├── storage.py       # Azure Blob Storage integration
+│   └── devops.py        # Azure DevOps Test Plans & Work Items
+├── chaos/
+│   ├── models.py        # ChaosResult / ChaosReport Pydantic models
+│   ├── base.py          # Abstract ChaosExperiment base class
+│   ├── corrupt_inputs.py# InputCorruptor + CorruptInputExperiment
+│   ├── security.py      # PermissionChaos + SecurityChaosExperiment
+│   ├── network.py       # NetworkChaos + NetworkChaosExperiment
+│   └── runner.py        # ChaosRunner orchestrator
+└── cli.py               # Typer-based CLI
+```
+
+**Version B**
 
 ```
 shadow_architect/
@@ -432,14 +471,6 @@ shadow_architect/
 
 ## Azure Integration
 
-| Service | Capability |
-|---|---|
-| Azure Blob Storage | Store and retrieve JSON reports |
-| Azure DevOps Test Plans | Publish validation runs |
-| Azure DevOps Work Items | Create Bugs for CRITICAL/HIGH findings |
-| Azure Monitor | (recommended) Push metrics via OpenTelemetry |
-## Azure Integration
-
 | Service | Use |
 |---|---|
 | Azure Blob Storage | Store constraint-violation reports |
@@ -448,14 +479,6 @@ shadow_architect/
 | Azure Monitor | (recommended) Push boundary metrics via OpenTelemetry |
 
 Set `SHADOW_ARCHITECT_MOCK_AZURE=1` to run without live Azure credentials.
-
----
-
-## Installation
-
-```bash
-pip install -e ".[dev]"
-```
 
 ---
 

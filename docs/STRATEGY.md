@@ -2,6 +2,12 @@
 
 ## 1. Purpose
 
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
 This tool exists to enforce guardrails, not to enumerate tests or demonstrate delivery velocity.
 
 The purpose of every check, experiment, and validation run is to answer one question: does this system respect its defined boundaries? It does not answer whether the system is correct, complete, or safe in general.
@@ -9,9 +15,8 @@ The purpose of every check, experiment, and validation run is to answer one ques
 Tests and checks referenced here are empirical boundary enforcement mechanisms. Where formal verification is infeasible — which is the default condition for AI-enabled systems — empirical checks are the available means of enforcing boundaries. They are not approximations of proof.
 
 A passing validation run means: the defined boundaries were not visibly crossed during the checks that were run. It does not mean the system is safe, correct, or ready for arbitrary deployment.
-# shadow-architect: Testing Strategy
 
-## 1. Purpose
+**Version B**
 
 This strategy exists to enforce system-level guardrails on AI systems and the infrastructure that supports them.
 
@@ -22,6 +27,12 @@ Testing, as applied here, is empirical enforcement of defined boundaries — not
 ---
 
 ## 2. System Boundaries and Red Lines
+
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
 
 Boundaries fall into three categories:
 
@@ -55,6 +66,9 @@ These vary without requiring escalation:
 - Test file naming conventions
 - Coverage percentages in non-boundary-critical source files
 - Choice of mocking library or fixture approach
+
+**Version B**
+
 Constraints are categorised into three groups. The classification determines the response when a constraint is violated.
 
 ### (a) Unacceptable System States — Must Never Occur
@@ -94,6 +108,12 @@ The following are tracked but do not produce findings or gate decisions:
 
 ## 3. Decisions Subject to Gating
 
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
 The following decisions require a gate to pass before proceeding. This tool enforces or surfaces the gate condition.
 
 | Decision | Gate Condition |
@@ -106,33 +126,8 @@ The following decisions require a gate to pass before proceeding. This tool enfo
 
 These are gates, not recommendations. A high compliance score does not override a failed gate condition.
 
----
+**Version B**
 
-## 4. Agentic Systems
-
-Agentic and autonomous systems require specific treatment because standard correctness verification assumptions do not apply:
-
-- **Composition is a primary risk.** The behavior of a multi-step or multi-model system cannot be fully inferred from the behavior of its components in isolation.
-- **Emergent behavior is expected, not exceptional.** Validation cannot enumerate all behaviors that emerge from agent composition.
-- **Containment, not correctness, is the primary goal.** The question is not "does it behave correctly?" but "if it behaves unexpectedly, is the impact bounded?"
-
-### Capability Limits
-
-The following forms of agentic autonomy are treated as gated:
-
-- Write operations to external systems (databases, APIs, file systems)
-- Execution of arbitrary code
-- Publication of content to external audiences
-- Delegation to sub-agents without human-visible context
-
-### Escalation Paths
-
-When an agentic system reaches a decision boundary it cannot classify, the expected behavior is:
-1. Stop and surface the decision to a human
-2. Log the context and the boundary that was reached
-3. Not proceed on the assumption that proceeding is safe
-
-Tools that override this pattern require explicit justification in an ADR.
 The following decision classes require passing constraint checks before they proceed.
 
 **Gating means the CI pipeline fails.** It is not advisory.
@@ -166,6 +161,38 @@ Failure modes that cannot be silently rolled back — credential leakage, schema
 
 ## 4. Agentic Systems
 
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
+Agentic and autonomous systems require specific treatment because standard correctness verification assumptions do not apply:
+
+- **Composition is a primary risk.** The behavior of a multi-step or multi-model system cannot be fully inferred from the behavior of its components in isolation.
+- **Emergent behavior is expected, not exceptional.** Validation cannot enumerate all behaviors that emerge from agent composition.
+- **Containment, not correctness, is the primary goal.** The question is not "does it behave correctly?" but "if it behaves unexpectedly, is the impact bounded?"
+
+### Capability Limits
+
+The following forms of agentic autonomy are treated as gated:
+
+- Write operations to external systems (databases, APIs, file systems)
+- Execution of arbitrary code
+- Publication of content to external audiences
+- Delegation to sub-agents without human-visible context
+
+### Escalation Paths
+
+When an agentic system reaches a decision boundary it cannot classify, the expected behavior is:
+1. Stop and surface the decision to a human
+2. Log the context and the boundary that was reached
+3. Not proceed on the assumption that proceeding is safe
+
+Tools that override this pattern require explicit justification in an ADR.
+
+**Version B**
+
 Agentic and autonomous systems present qualitatively different risk profiles from deterministic software. This strategy treats them accordingly.
 
 **Composition is a primary risk vector.** Individual components may behave within their declared envelopes; composed systems may not. Integration-boundary containment tests are required for any agentic pipeline.
@@ -182,6 +209,12 @@ The chaos module's security and corrupt-inputs scenarios are the primary contain
 
 ## 5. Epistemic Honesty
 
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
 This strategy explicitly does not claim:
 
 - **Correctness.** A passing validation run means boundaries were not visibly crossed during checks. It does not mean the system is correct.
@@ -191,6 +224,9 @@ This strategy explicitly does not claim:
 - **Predictability of agentic behavior.** Emergent and compositional behaviors in agentic systems cannot be fully captured by static checks or template tests.
 
 Where formal verification is infeasible, checks are empirical enforcement. They are evidence, not proof.
+
+**Version B**
+
 This strategy does not:
 
 - **Prove correctness.** A passing gate means declared constraints were not visibly violated during the test run. It does not mean the system is correct.
@@ -205,6 +241,12 @@ Where formal verification is infeasible — which is the default condition for L
 
 ## 6. Role Clarity
 
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
 Responsibilities are defined by function, not title:
 
 | Function | Responsibility |
@@ -215,6 +257,9 @@ Responsibilities are defined by function, not title:
 | Override visibility | When a gate is bypassed, record who made the decision, what risk was accepted, and for what scope. |
 
 Role titles such as "QA", "Test Manager", or "Solution Architect" are not used here because they imply process ownership rather than boundary accountability.
+
+**Version B**
+
 This strategy does not use titles like QA, Test Manager, or Solution Architect. Responsibilities are described by function:
 
 | Responsibility | Description |
@@ -230,6 +275,12 @@ These responsibilities may be held by the same person on a small team or distrib
 
 ## 7. Evidence We Require Before Release
 
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
 Before a system governed by this tool is released, the following must be documented:
 
 1. A completed validation run with no CRITICAL findings unresolved
@@ -239,6 +290,9 @@ Before a system governed by this tool is released, the following must be documen
 5. An explicit record of any overridden gate: who accepted the risk, what the risk was, and for which release
 
 Evidence is empirical. Declaring that a boundary holds is not evidence that it holds.
+
+**Version B**
+
 The following must be present and passing before a release gate opens:
 
 1. At least one test function exists in the declared suite.
@@ -252,6 +306,12 @@ The following must be present and passing before a release gate opens:
 
 ## 8. Override and Escalation Protocols
 
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
 A gate can be bypassed only when:
 
 1. The bypass is explicit and recorded — not implied by skipping a check or reconfiguring a threshold
@@ -262,6 +322,9 @@ A gate can be bypassed only when:
 Override does not remove the gate. It records that the gate was bypassed, by whom, and for what scope.
 
 When a CRITICAL finding cannot be resolved, the release decision is escalated to a human. The tool surfaces the finding; it does not make the deployment decision.
+
+**Version B**
+
 ### Who Can Override
 
 The person responsible for boundary definition for the affected system. Override authority cannot be self-assigned for red-line violations.
@@ -288,6 +351,12 @@ Overrides do not carry forward across releases. Each release gate requires fresh
 
 ## 9. Failure Classes We Intentionally Ignore
 
+### Two versions, to be reconciled
+
+The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
+
+**Version A**
+
 The following are outside the scope of this tool and should not be inferred from its output:
 
 - **General performance optimization.** The tool does not measure or optimize system performance beyond detecting tests that may indicate performance boundary coverage.
@@ -295,6 +364,9 @@ The following are outside the scope of this tool and should not be inferred from
 - **Completeness of documentation.** The tool does not assess whether documentation accurately describes system behavior.
 - **Test coverage as a delivery metric.** Coverage percentages are boundary gap indicators, not velocity or quality scores.
 - **Full ethical review.** The bias and sensitive disclosure checks identify specific failure classes. They are not a substitute for a structured ethical review process.
+
+**Version B**
+
 The following are out of scope. They will not be gated on, reported on, or used as evaluation criteria:
 
 - **Proof of correctness.** Not attempted. Tests are empirical boundary enforcement.
