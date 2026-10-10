@@ -17,9 +17,10 @@ pytest --cov=shadow_architect --cov-fail-under=89 # what CI runs — coverage is
 ruff check .                 # lint (line length 100; E, F, I, N, W, UP)
 mypy src/                    # type check (strict mode)
 python -m compileall -q src  # CI's parse gate — catches unparseable source even if no test imports it
+python .github/scripts/check_docs.py  # CI's doc check — links, front matter, README test citations and module tree
 ```
 
-CI (`.github/workflows/ci.yml`) runs the parse gate, pytest with the coverage ratchet on Python 3.10 and 3.13, and `ruff check .`. The suite needs no live Azure credentials — set `SHADOW_ARCHITECT_MOCK_AZURE=1` to run any Azure-facing code without them. Testing mechanics, the incident the CI exists because of, and how to extend the suite are in `TestingStrategy.md`; two rules from it worth repeating: a new evaluator lands with tests for both verdicts plus a malformed-input case (the tool parses arbitrary user projects), and when editing docstrings replace rather than stack — stacked-duplicate docstrings once made four source files unparseable and killed the whole suite silently.
+CI (`.github/workflows/ci.yml`) runs the parse gate, pytest with the coverage ratchet on Python 3.10 and 3.13, `ruff check .`, and the doc check. Every README capability claim names the test that proves it, or says "not yet implemented" or "no test yet" — never cite a test that does not exist. The suite needs no live Azure credentials — set `SHADOW_ARCHITECT_MOCK_AZURE=1` to run any Azure-facing code without them. Testing mechanics, the incident the CI exists because of, and how to extend the suite are in `TestingStrategy.md`; two rules from it worth repeating: a new evaluator lands with tests for both verdicts plus a malformed-input case (the tool parses arbitrary user projects), and when editing docstrings replace rather than stack — stacked-duplicate docstrings once made four source files unparseable and killed the whole suite silently.
 
 ## Architecture
 

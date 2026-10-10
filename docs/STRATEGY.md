@@ -130,7 +130,7 @@ These are gates, not recommendations. A high compliance score does not override 
 
 The following decision classes require passing constraint checks before they proceed.
 
-**Gating means the CI pipeline fails.** It is not advisory.
+**Gating means the CI pipeline fails** — once the pipeline opts in with `shadow-architect run --fail-on critical|high`, which is off by default. It is not advisory.
 
 ### Irreversible Decisions
 
@@ -306,46 +306,17 @@ The following must be present and passing before a release gate opens:
 
 ## 8. Override and Escalation Protocols
 
-### Two versions, to be reconciled
-
-The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
-
-**Version A**
-
-A gate can be bypassed only when:
+This is the override protocol of [ADR 002](adr/002-gating-authority-for-irreversible-decisions.md). A gate can be bypassed only when:
 
 1. The bypass is explicit and recorded — not implied by skipping a check or reconfiguring a threshold
 2. The person accepting the bypass acknowledges the specific risk in writing (commit message, PR description, or issue reference)
 3. The bypass is time-bounded — it applies to a named release, not indefinitely
 4. The bypass is visible in the audit trail — it must appear in the validation report metadata
+5. Override authority cannot be self-assigned — the bypass is accepted by the person responsible for boundary definition for the affected system, and a bypass of a red-line constraint escalates: it cannot be closed by the person who opened it
 
 Override does not remove the gate. It records that the gate was bypassed, by whom, and for what scope.
 
 When a CRITICAL finding cannot be resolved, the release decision is escalated to a human. The tool surfaces the finding; it does not make the deployment decision.
-
-**Version B**
-
-### Who Can Override
-
-The person responsible for boundary definition for the affected system. Override authority cannot be self-assigned for red-line violations.
-
-### What Is Required
-
-A written rationale explaining why the constraint does not apply or why the risk is accepted. The rationale must reference the finding ID from the report. Rationales of the form "no time" or "not important" are not accepted.
-
-### How Overrides Are Recorded
-
-Overrides are recorded in the Azure DevOps work item created for the finding. A work item without a recorded rationale means the gate was bypassed, not overridden. Bypasses are escalation triggers.
-
-### Escalation Triggers
-
-Any override of a red-line constraint (unacceptable state) escalates automatically. It cannot be closed by the same person who opened it.
-
-Any CRITICAL finding present at release without either passing evidence or a recorded override is a post-release escalation item.
-
-### Override Expiry
-
-Overrides do not carry forward across releases. Each release gate requires fresh evidence or a fresh override. Overrides from a previous release are not inherited.
 
 ---
 

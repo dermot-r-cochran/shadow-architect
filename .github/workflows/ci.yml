@@ -70,3 +70,21 @@ jobs:
 
       - name: ruff check
         run: ruff check .
+
+  docs:
+    name: docs check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Check README and docs
+        # Standard library only: relative links resolve, at most one
+        # front-matter block per Markdown file, and what the README states
+        # (the tests it cites as proof, the module tree) matches the disk.
+        run: python .github/scripts/check_docs.py

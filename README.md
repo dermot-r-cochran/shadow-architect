@@ -21,14 +21,16 @@ Tests, checks, and reviews referenced here exist to enforce these boundaries emp
 
 It operates on Python test suites and system artefacts to:
 
-| Capability | Description |
-|---|---|
-| 🔍 **Analyse** | Detect structural gaps: missing adversarial coverage, absent isolation boundaries, unchecked failure modes |
-| 🚧 **Enforce boundaries** | Check whether declared system constraints are violated — not whether a score threshold is met |
-| ⚠️ **Surface failure classes** | Identify which OWASP LLM Top-10 failure classes are uncontained in the current suite |
-| 🔒 **Gate decisions** | Block or escalate when irreversible, externally-visible, or autonomy-expanding decisions lack required evidence |
-| ☁️ **Azure integration** | Upload constraint-violation reports to Azure Blob Storage; create work items for CRITICAL/HIGH findings in Azure DevOps |
-| 🤖 **Containment stubs** | Generate test stubs for uncovered adversarial failure classes |
+| Capability | Description | Proved by |
+|---|---|---|
+| 🔍 **Analyse** | Detect structural gaps: missing adversarial coverage, absent isolation boundaries, unchecked failure modes | `tests/test_analyzer.py::TestStrategyAnalyzerBasic::test_ai_product_recommends_adversarial_tests`, `tests/test_analyzer.py::TestStrategyAnalyzerBasic::test_empty_suite_produces_no_tests_finding` |
+| 🚧 **Enforce boundaries** | Check whether declared system constraints are violated — not whether a score threshold is met | `tests/test_validator.py::TestTestValidator::test_adversarial_criterion_applicable_to_ai_product` |
+| ⚠️ **Surface failure classes** | Identify which OWASP LLM Top-10 failure classes are uncontained in the current suite | `tests/test_evaluators.py::TestAdversarialEvaluator::test_empty_suite_flags_all_categories` |
+| 🔒 **Gate decisions** | Block or escalate when irreversible, externally-visible, or autonomy-expanding decisions lack required evidence | `tests/test_adr_guards.py::TestAdr002GatingOnFindingsNotScore::test_fail_on_high_blocks_ai_product_without_adversarial_tests` |
+| ☁️ **Azure integration** | Upload constraint-violation reports to Azure Blob Storage; create work items for CRITICAL/HIGH findings in Azure DevOps | `tests/test_azure.py::TestStorageClient::test_upload_report_returns_blob_name`, `tests/test_azure.py::TestDevOpsClient::test_create_work_items_for_high_findings` |
+| 🤖 **Containment stubs** | Generate test stubs for uncovered adversarial failure classes | `tests/test_cli.py::TestGenerateAdversarialCommand::test_generates_stubs_to_file` |
+
+Every row in this README that claims a capability names the test that proves it (file and test name), or says "not yet implemented", or "no test yet"; `.github/scripts/check_docs.py` fails CI if a named test does not exist.
 
 ---
 
@@ -118,8 +120,6 @@ The following decision classes are **gated**: release is blocked unless the requ
 2. **External exposure** — Any component that accepts or emits data across a trust boundary (API endpoints, LLM prompt construction, output rendering). Requires security and insecure-output containment evidence.
 3. **Agentic autonomy expansion** — Any change that increases an agent's capability scope, tool access, or action authority. Requires adversarial coverage of the new capability class before gate passes.
 4. **Non-rollbackable failure modes** — Failure modes that cannot be silently rolled back (credential leakage, schema mutations, irreversible external writes). These trigger escalation regardless of overall constraint score.
-
-Gating is enforced via `--fail-below` in CI. The default gate threshold is documented in [`docs/STRATEGY.md`](docs/STRATEGY.md).
 
 ---
 
@@ -225,32 +225,17 @@ This strategy does not attempt to:
 
 ## Override and Escalation Protocols
 
-### Two versions, to be reconciled
-
-The two passages below are the two drafts this document was stacked from; which to keep, or how to merge them, is Dermot's choice.
-
-**Version A**
-
-A gate can be overridden only under the following conditions:
+A gate can be overridden only under the following conditions (the protocol of [ADR 002](docs/adr/002-gating-authority-for-irreversible-decisions.md)):
 
 1. The override is explicit — not implied by silence, skip, or configuration change
 2. The person accepting the override acknowledges the specific risk in writing (commit message, PR description, or linked issue)
 3. The override is time-bounded — it applies to a named release or deployment, not indefinitely
 4. The override is visible in the audit trail — it must appear in the validation report metadata
+5. Override authority cannot be self-assigned — the override is accepted by the person responsible for boundary definition for the affected system, and an override of a red-line constraint escalates: it cannot be closed by the person who opened it
 
 Override does not remove the gate. It records that the gate was bypassed and by whom.
 
 If a CRITICAL finding exists and cannot be resolved, the deployment is escalated to a human decision. The tool surfaces the finding; it does not make the deployment decision.
-
-**Version B**
-
-Gating decisions can be overridden under the following conditions:
-
-1. **Who can override**: The person responsible for boundary definition for the affected system. Override authority cannot be self-assigned.
-2. **What is required**: A written rationale explaining why the constraint does not apply or why the risk is accepted, linked to the finding ID in the report.
-3. **Visibility**: All overrides are recorded in the Azure DevOps work item created for the finding. Overrides without a recorded rationale invalidate the gate.
-4. **Escalation trigger**: Any override of a RED LINE constraint (unacceptable state) escalates automatically — it cannot be closed by the same person who opened the override.
-5. **Expiry**: Overrides do not carry forward across releases. Each release gate requires fresh evidence or a fresh override.
 
 ---
 
@@ -264,11 +249,11 @@ The two passages below are the two drafts this document was stacked from; which 
 
 The `chaos` module enforces containment boundaries under adverse conditions. It is not general resilience exploration — each experiment targets a specific boundary:
 
-| Experiment | Boundary Enforced |
-|---|---|
-| `corrupt-inputs` | System must handle malformed, null, and adversarial inputs without uncontrolled failure |
-| `security` | System must not silently succeed when credentials are missing, expired, or insufficient |
-| `network` | System must surface failures from latency, timeout, and connection disruption — not swallow them |
+| Experiment | Boundary Enforced | Proved by |
+|---|---|---|
+| `corrupt-inputs` | System must handle malformed, null, and adversarial inputs without uncontrolled failure | `tests/test_chaos.py::TestCorruptInputExperiment::test_unhandled_exception_causes_failure` |
+| `security` | System must not silently succeed when credentials are missing, expired, or insufficient | `tests/test_chaos.py::TestSecurityChaosExperiment::test_sensitive_leak_detection` |
+| `network` | System must surface failures from latency, timeout, and connection disruption — not swallow them | `tests/test_chaos.py::TestNetworkChaosExperiment::test_unhandled_network_exception_fails` |
 
 A containment experiment that fails (returns `FAILED` status) indicates the boundary was crossed. This is a finding, not a measurement.
 
@@ -276,11 +261,11 @@ A containment experiment that fails (returns `FAILED` status) indicates the boun
 
 The `chaos` module validates **resilience boundaries** — whether the system contains and surfaces failures gracefully rather than propagating or silently swallowing them.
 
-| Scenario | Boundary Tested |
-|---|---|
-| `corrupt-inputs` | Input validation boundary: null injection, type confusion, encoding corruption, malformed source |
-| `security` | Credential and authorisation boundary: missing credentials, RBAC responses, expired tokens |
-| `network` | Infrastructure boundary: latency, timeouts, connection failure, intermittent disruption |
+| Scenario | Boundary Tested | Proved by |
+|---|---|---|
+| `corrupt-inputs` | Input validation boundary: null injection, type confusion, encoding corruption, malformed source | `tests/test_chaos.py::TestCorruptInputExperiment::test_unhandled_exception_causes_failure` |
+| `security` | Credential and authorisation boundary: missing credentials, RBAC responses, expired tokens | `tests/test_chaos.py::TestSecurityChaosExperiment::test_sensitive_leak_detection` |
+| `network` | Infrastructure boundary: latency, timeouts, connection failure, intermittent disruption | `tests/test_chaos.py::TestNetworkChaosExperiment::test_unhandled_network_exception_fails` |
 
 A chaos experiment **passes** when the system isolates the fault and surfaces it cleanly. It **fails** when the fault propagates, causes silent data corruption, or is swallowed without visibility.
 
@@ -471,12 +456,12 @@ shadow_architect/
 
 ## Azure Integration
 
-| Service | Use |
-|---|---|
-| Azure Blob Storage | Store constraint-violation reports |
-| Azure DevOps Test Plans | Publish gate results |
-| Azure DevOps Work Items | Create Bugs for CRITICAL/HIGH constraint violations |
-| Azure Monitor | (recommended) Push boundary metrics via OpenTelemetry |
+| Service | Use | Proved by |
+|---|---|---|
+| Azure Blob Storage | Store constraint-violation reports | `tests/test_azure.py::TestStorageClient::test_upload_report_returns_blob_name` |
+| Azure DevOps Test Plans | Publish gate results | `tests/test_azure.py::TestDevOpsClient::test_publish_test_run_returns_dict` |
+| Azure DevOps Work Items | Create Bugs for CRITICAL/HIGH constraint violations | `tests/test_azure.py::TestDevOpsClient::test_create_work_items_for_high_findings` |
+| Azure Monitor | (recommended) Push boundary metrics via OpenTelemetry | not yet implemented |
 
 Set `SHADOW_ARCHITECT_MOCK_AZURE=1` to run without live Azure credentials.
 
