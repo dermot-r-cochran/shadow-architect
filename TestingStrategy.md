@@ -57,6 +57,24 @@ any finding they raise here as a bug in one or the other.
   from leaving the old text attached to the new docstring's closing quotes,
   and it is invisible until something actually parses the file.
 
+## The documentation check
+
+Added 10 October 2026. The README's capability tables name, row by row, the
+test that proves each claim (`tests/test_x.py::Class::test_name`), or say "not
+yet implemented" or "no test yet". `.github/scripts/check_docs.py` (standard
+library only, run by the `docs check` job in `ci.yml`) fails when:
+
+- a relative link in README.md, CLAUDE.md, this file or `docs/` resolves to
+  no file;
+- a Markdown file carries a second front-matter block (the shape a stacked
+  paste leaves — the same failure as the docstring incident, in prose);
+- the README cites a test that does not exist, or its module tree under
+  *Architecture* names a different set of modules than `src/shadow_architect/`
+  holds.
+
+Run it locally with `python .github/scripts/check_docs.py`. When a test the
+README cites is renamed or removed, update the row in the same change.
+
 ## Known gaps (candidates for next)
 
 - ~~No CI~~ — **closed 2026-08-24, the day after this document argued for
