@@ -44,6 +44,18 @@ The tool's identity is settled in the docs, and changes should stay inside it:
 
 `docs/BOUNDARIES.md` is the concrete map from each boundary (red lines, tolerable-but-visible states, acceptable variability) to the specific criterion/evaluator/experiment enforcing it — when adding or changing a check, update it in the same change. `docs/STRATEGY.md` carries the full strategy context, including override and escalation protocols. Findings vocabulary throughout: a gap is a *containment boundary gap*, a chaos failure is a *finding*, not a measurement.
 
+## Which model does which work
+
+Dermot's direction, 2026-10-11: the account-wide split recorded in `star-rangers`' `CLAUDE.md`, applied here. Opus is the default. Fable is kept for narrative prose and image prompts and has no work in this repository.
+
+- **Haiku: reading and trivial fixes.** Read-only searches, summarising a failing CI log, `check_docs.py` drift, and simple `ruff` fixes. The parse gate, coverage gate, `ruff`, `mypy` and the doc check catch its mistakes.
+- **Sonnet: code and tests.** Logic changes and new tests, including tests that raise the coverage ratchet. A test that merely passes is not necessarily one that checks the right thing, which is why this is not Haiku's. A new evaluator still lands with tests for both verdicts and a malformed-input case.
+- **Opus: the protected parts.** ADRs 001 to 005, `tests/test_adr_guards.py`, `docs/BOUNDARIES.md`, and ADR 004's rule that no output claims correctness or safety. No model below Opus edits these, even where a gate would catch the mistake.
+- **Opus reviews and approves** a Haiku or Sonnet subagent's diff, and it merges when CI is green.
+- **Chrome extension:** Opus for anything that signs in, submits or posts; Sonnet for read-only browsing; never Haiku. The extension acts in Dermot's own Chrome with his sign-ins, and a web page can carry text written to steer the model.
+
+A subagent runs on its parent session's model unless the call names another, so name the model on every delegation.
+
 ## Related repositories
 
 The map of Dermot's public repositories and what crosses between them is
