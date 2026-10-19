@@ -70,6 +70,30 @@ class TestStrategyAnalyzerBasic:
         assert result.test_count == 2
         assert result.assertion_count == 2
 
+    def test_class_based_tests_are_counted_once(self, analyzer, tmp_path):
+        # Methods of a Test* class were once counted twice (by the generic
+        # function walk and again by a class branch), so a three-test file
+        # reported five tests and the assertion count doubled with it.
+        content = textwrap.dedent(
+            """\
+            class TestThing:
+                def test_a(self):
+                    assert 1
+
+                def test_b(self):
+                    assert 2
+                    assert 3
+
+            def test_c():
+                assert 4
+            """
+        )
+        p = tmp_path / "test_classes.py"
+        p.write_text(content)
+        result = analyzer.analyze(TestSuite(name="Classes", test_files=[str(p)]))
+        assert result.test_count == 3
+        assert result.assertion_count == 4
+
     def test_assertion_density_calculated(self, analyzer, simple_test_file):
         suite = TestSuite(name="Math", test_files=[str(simple_test_file)])
         result = analyzer.analyze(suite)
