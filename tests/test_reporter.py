@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -76,6 +77,18 @@ class TestTestReporter:
         reporter = TestReporter()
         reporter.print_summary(full_report)
         # Either rich or plain output – should complete without exception
+
+    def test_console_output_has_no_letter_grade(self, full_report, capsys):
+        # ADR 001: the score is a compliance summary, not a quality grade.
+        # The grade field stays in the data model; the console must not print it.
+        reporter = TestReporter()
+        reporter.print_summary(full_report)
+        reporter._plain_summary(full_report)
+        out = capsys.readouterr().out
+        assert "/100" in out
+        assert "grade" not in out.lower()
+        assert not re.search(r"\(\s*[A-F]\s*\)", out)
+        assert full_report.grade in ("A", "B", "C", "D", "F")
 
     def test_empty_report_grade_na(self):
         report = TestReport(suite_name="X", product="Y", use_case="Z")

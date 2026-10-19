@@ -40,7 +40,7 @@ from shadow_architect.evaluators.quality import QualityEvaluator
 
 app = typer.Typer(
     name="shadow-architect",
-    help="Meta-testing framework for AI capabilities on Azure Cloud.",
+    help="System-level guardrail enforcement for AI systems on Azure Cloud.",
     add_completion=False,
 )
 
@@ -343,6 +343,7 @@ def chaos(
         NetworkChaosExperiment,
         SecurityChaosExperiment,
     )
+    from shadow_architect.chaos.base import ChaosExperiment
     from shadow_architect.chaos.runner import ChaosRunner
 
     requested = {s.strip() for s in scenarios.split(",")}
@@ -352,7 +353,7 @@ def chaos(
     if target_module is not None and target_module.exists():
         source = target_module.read_text(encoding="utf-8", errors="replace")
 
-        def _target(value: object = source) -> None:  # type: ignore[assignment]
+        def _target(value: object = source) -> None:
             from shadow_architect.core.analyzer import TestStrategyAnalyzer
             from shadow_architect.core.models import TestSuite
 
@@ -365,7 +366,7 @@ def chaos(
 
     else:
 
-        def _target(value: object = "") -> None:  # type: ignore[assignment]
+        def _target(value: object = "") -> None:
             from shadow_architect.core.analyzer import TestStrategyAnalyzer
             from shadow_architect.core.models import TestSuite
 
@@ -374,7 +375,7 @@ def chaos(
             analyzer = TestStrategyAnalyzer()
             analyzer.analyze(TestSuite(name="chaos-noop", test_files=[]))
 
-    experiments = []
+    experiments: list[ChaosExperiment] = []
     if "corrupt-inputs" in requested:
         experiments.append(
             CorruptInputExperiment(

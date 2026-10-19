@@ -1,8 +1,8 @@
 """Azure DevOps integration.
 
-Publishes meta-testing results as test runs and work items to an Azure
-DevOps project, enabling traceability between the meta-testing analysis
-and the project's test plans.
+Publishes boundary-enforcement results as test runs and work items to an
+Azure DevOps project, enabling traceability between the analysis and the
+project's test plans.
 
 When ``SHADOW_ARCHITECT_MOCK_AZURE=1`` the module uses in-memory stubs.
 """

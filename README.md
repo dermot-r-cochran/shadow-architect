@@ -482,6 +482,6 @@ pytest
 # Lint
 ruff check src/ tests/
 
-# Type check
+# Type check (strict; CI runs this too)
 mypy src/
 ```

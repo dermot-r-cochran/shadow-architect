@@ -6,7 +6,7 @@ import random
 import threading
 import time
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Literal
 from unittest.mock import MagicMock, patch
 
 from shadow_architect.chaos.base import ChaosExperiment
@@ -35,7 +35,7 @@ class _LatencyCtx:
         self._patcher.start()
         return self
 
-    def __exit__(self, *_: Any) -> bool:
+    def __exit__(self, *_: Any) -> Literal[False]:
         if self._patcher is not None:
             self._patcher.stop()
         return False
@@ -53,7 +53,7 @@ class _TimeoutCtx:
         self._patcher.start()
         return self
 
-    def __exit__(self, *_: Any) -> bool:
+    def __exit__(self, *_: Any) -> Literal[False]:
         if self._patcher is not None:
             self._patcher.stop()
         return False
@@ -70,7 +70,7 @@ class _ConnectionRefusedCtx:
         self._patcher.start()
         return self
 
-    def __exit__(self, *_: Any) -> bool:
+    def __exit__(self, *_: Any) -> Literal[False]:
         if self._patcher is not None:
             self._patcher.stop()
         return False
@@ -104,7 +104,7 @@ class _IntermittentCtx:
         self._patcher.start()
         return self
 
-    def __exit__(self, *_: Any) -> bool:
+    def __exit__(self, *_: Any) -> Literal[False]:
         if self._patcher is not None:
             self._patcher.stop()
         return False
@@ -130,7 +130,7 @@ class _SlowResponseCtx:
         self._patcher.start()
         return self
 
-    def __exit__(self, *_: Any) -> bool:
+    def __exit__(self, *_: Any) -> Literal[False]:
         if self._patcher is not None:
             self._patcher.stop()
         return False
