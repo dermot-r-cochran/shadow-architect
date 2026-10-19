@@ -86,6 +86,10 @@ README cites is renamed or removed, update the row in the same change.
   computed the coverage evaluation and then discarded it, so reports silently
   omitted every symbol-gap finding; `cli.py` now merges
   `coverage_result.findings` like its adversarial and quality neighbours.
+- ~~No type check in CI~~ — **closed 2026-10-19**: `mypy src/` (strict, as
+  configured in `pyproject.toml`) runs as the `mypy` job in `ci.yml`, added
+  green after annotation-only fixes to the context-manager `__exit__` return
+  types in `chaos/` and the experiment list in `cli.py`.
 - ~~150 test functions exist but 139 run; the difference is worth an audit
   (skips/parametrisation vs. dead tests)~~ — **audited 2026-10-19**: no
   dead tests. The surplus is `def test_…` lines written *inside* fixture

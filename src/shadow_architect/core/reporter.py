@@ -1,7 +1,8 @@
 """Report generation module.
 
 Produces human-readable and machine-readable reports summarising the
-meta-testing analysis, validation, and improvement plan.
+analysis, boundary validation, and improvement plan of a boundary-enforcement
+run.
 """
 
 from __future__ import annotations
@@ -20,7 +21,7 @@ from shadow_architect.core.validator import ValidationResult
 
 @dataclass
 class TestReport:
-    """Aggregated report from a full meta-testing run."""
+    """Aggregated report from a full boundary-enforcement run."""
 
     suite_name: str
     product: str
@@ -122,7 +123,7 @@ class TestReport:
 
 
 class TestReporter:
-    """Generates reports from a completed meta-testing run.
+    """Generates reports from a completed boundary-enforcement run.
 
     Usage::
 
@@ -181,12 +182,12 @@ class TestReporter:
 
         console.print(
             Panel(
-                f"[bold]Meta-Testing Report[/bold]\n"
+                f"[bold]Boundary Enforcement Report[/bold]\n"
                 f"Suite: [cyan]{report.suite_name}[/cyan]  "
                 f"Product: [cyan]{report.product}[/cyan]  "
                 f"Use Case: [cyan]{report.use_case}[/cyan]\n"
                 f"Score: [{score_color}]{report.overall_score:.1f}/100 "
-                f"({report.grade})[/{score_color}]",
+                f"(compliance summary)[/{score_color}]",
                 title="shadow-architect",
             )
         )
@@ -224,11 +225,11 @@ class TestReporter:
                 console.print(f"  • ({rec.effort}) {rec.title}")
 
     def _plain_summary(self, report: TestReport) -> None:
-        print("\n=== shadow-architect: Meta-Testing Report ===")
+        print("\n=== shadow-architect: Boundary Enforcement Report ===")
         print(f"Suite   : {report.suite_name}")
         print(f"Product : {report.product}")
         print(f"Use Case: {report.use_case}")
-        print(f"Score   : {report.overall_score:.1f}/100  Grade: {report.grade}")
+        print(f"Score   : {report.overall_score:.1f}/100 (compliance summary)")
 
         if report.analysis:
             print(f"\nTests: {report.analysis.test_count}  "

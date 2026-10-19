@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, Literal
 from unittest.mock import MagicMock, patch
 
 from shadow_architect.chaos.base import ChaosExperiment
@@ -48,7 +48,7 @@ class _MissingCredentialsCtx:
                 self._saved[var] = val
         return self
 
-    def __exit__(self, *_: Any) -> bool:
+    def __exit__(self, *_: Any) -> Literal[False]:
         os.environ.update(self._saved)
         return False
 
@@ -67,7 +67,7 @@ class _RbacSimCtx:
         self._patcher.start()
         return self
 
-    def __exit__(self, *_: Any) -> bool:
+    def __exit__(self, *_: Any) -> Literal[False]:
         if self._patcher is not None:
             self._patcher.stop()
         return False
@@ -88,7 +88,7 @@ class _ExpiredTokenCtx:
         self._patcher.start()
         return self
 
-    def __exit__(self, *_: Any) -> bool:
+    def __exit__(self, *_: Any) -> Literal[False]:
         if self._patcher is not None:
             self._patcher.stop()
         return False
@@ -108,7 +108,7 @@ class _WrongTenantCtx:
         os.environ["AZURE_SUBSCRIPTION_ID"] = self._FAKE_SUBSCRIPTION
         return self
 
-    def __exit__(self, *_: Any) -> bool:
+    def __exit__(self, *_: Any) -> Literal[False]:
         for var, val in self._saved.items():
             if val is None:
                 os.environ.pop(var, None)

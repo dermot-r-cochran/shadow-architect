@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from abc import ABC, abstractmethod
 from types import TracebackType
-from typing import Any
+from typing import Any, Literal
 
 from shadow_architect.chaos.models import ChaosResult, ChaosStatus
 
@@ -122,7 +122,7 @@ class ChaosExperiment(ABC):
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
-    ) -> bool:
+    ) -> Literal[False]:
         # Ensure teardown is always called when used as a context manager.
         # We do NOT suppress the outer exception.
         try:
