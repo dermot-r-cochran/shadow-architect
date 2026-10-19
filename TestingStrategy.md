@@ -86,6 +86,14 @@ README cites is renamed or removed, update the row in the same change.
   computed the coverage evaluation and then discarded it, so reports silently
   omitted every symbol-gap finding; `cli.py` now merges
   `coverage_result.findings` like its adversarial and quality neighbours.
-- 150 test functions exist but 139 run; the difference is worth an audit
-  (skips/parametrisation vs. dead tests).
+- ~~150 test functions exist but 139 run; the difference is worth an audit
+  (skips/parametrisation vs. dead tests)~~ — **audited 2026-10-19**: no
+  dead tests. The surplus is `def test_…` lines written *inside* fixture
+  source strings (the sample suites the tests feed the analyzer); a plain
+  grep counts them, pytest does not. The same audit found the analyzer
+  itself counting every test method of a `Test*` class twice (`ast.walk`
+  visits the method, then a class branch counted it again), so the tool
+  reported 19 tests for this repository's `tests/test_cli.py` where pytest
+  collects 9; fixed in `core/analyzer.py`, pinned by
+  `tests/test_analyzer.py::TestStrategyAnalyzerBasic::test_class_based_tests_are_counted_once`.
 - ~~Coverage unmeasured~~ — the CI ratchet above holds it at ≥89%.

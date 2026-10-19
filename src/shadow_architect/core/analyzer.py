@@ -152,6 +152,11 @@ class TestStrategyAnalyzer:
             analysis.assertion_count += len(self._ASSERT_RE.findall(source))
             return
 
+        # ast.walk already visits every function definition at every depth,
+        # methods of ``Test*`` classes included, so each test is counted
+        # here exactly once. A second branch that re-counted the methods of
+        # ``Test*`` classes once doubled the test and assertion counts for
+        # any class-based pytest suite (tests/test_analyzer.py pins this).
         for node in ast.walk(tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 if node.name.startswith("test_"):
@@ -160,14 +165,6 @@ class TestStrategyAnalyzer:
                     for child in ast.walk(node):
                         if isinstance(child, ast.Assert):
                             analysis.assertion_count += 1
-            elif isinstance(node, ast.ClassDef) and node.name.startswith("Test"):
-                for item in node.body:
-                    if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        if item.name.startswith("test_"):
-                            analysis.test_count += 1
-                            for child in ast.walk(item):
-                                if isinstance(child, ast.Assert):
-                                    analysis.assertion_count += 1
 
     def _detect_test_types(self, analysis: StrategyAnalysis) -> None:
         """Infer which test types are present from file names and content."""
