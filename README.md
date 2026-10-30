@@ -331,3 +331,8 @@ ruff check src/ tests/
 # Type check (strict; CI runs this too)
 mypy src/
 ```
+
+## Related
+
+- [architecture-definition-model](https://github.com/dermot-r-cochran/architecture-definition-model) is the nearest in subject: it defines and governs the architecture of generative-AI systems, where this tool enforces boundaries on them once deployed. Neither cites the other.
+- How these and the author's other public repositories relate is kept in one map: [RELATED-REPOSITORIES.md](https://github.com/dermot-r-cochran/star-rangers/blob/main/RELATED-REPOSITORIES.md).
