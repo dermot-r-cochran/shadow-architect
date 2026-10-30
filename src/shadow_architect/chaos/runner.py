@@ -111,13 +111,14 @@ class ChaosRunner:
             )
 
         _console.print(table)
+        # No pass rate on screen: ADR 005 rejects chaos as a percentage
+        # metric. The JSON report keeps pass_rate for machine consumers.
         _console.print(
             f"\n[bold]Summary:[/bold] "
             f"{report.passed} passed, "
             f"{report.failed} failed, "
             f"{report.errors} errors, "
-            f"{report.skipped} skipped  "
-            f"(pass rate: {report.pass_rate:.0%})"
+            f"{report.skipped} skipped"
         )
 
     def write_json(self, report: ChaosReport, path: Path) -> None:
