@@ -13,7 +13,13 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from shadow_architect.core.analyzer import StrategyAnalysis
-from shadow_architect.core.models import Finding, Recommendation, Severity, TestType
+from shadow_architect.core.models import (
+    Finding,
+    Recommendation,
+    Severity,
+    TestSuite,
+    TestType,
+)
 
 
 @dataclass
@@ -136,19 +142,25 @@ class IntegrationTestPresenceCriterion(ValidationCriterion):
         )
 
 
+# The one keyword set that marks a product as AI. Both the
+# adversarial-tests-present criterion and the run command's adversarial
+# check read it, so the two cannot disagree about what counts as AI.
+AI_PRODUCT_KEYWORDS: tuple[str, ...] = ("ai", "ml", "model", "llm", "gpt")
+
+
+def is_ai_product(suite: TestSuite) -> bool:
+    """Whether the suite's product or use-case context names an AI capability."""
+    context = (suite.product + " " + suite.use_case).lower()
+    return any(kw in context for kw in AI_PRODUCT_KEYWORDS)
+
+
 class AdversarialTestPresenceCriterion(ValidationCriterion):
     id = "adversarial-tests-present"
     title = "Adversarial / robustness tests present"
     weight = 4.0
 
     def evaluate(self, analysis: StrategyAnalysis) -> tuple[bool, Finding | None]:
-        product_lower = (
-            analysis.suite.product + " " + analysis.suite.use_case
-        ).lower()
-        is_ai = any(
-            kw in product_lower for kw in ("ai", "ml", "model", "llm", "gpt")
-        )
-        if not is_ai:
+        if not is_ai_product(analysis.suite):
             # Not applicable – criterion passes by default
             return True, None
         if TestType.ADVERSARIAL in analysis.test_types_found:

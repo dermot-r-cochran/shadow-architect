@@ -33,7 +33,7 @@ from shadow_architect.core.analyzer import StrategyAnalysis, TestStrategyAnalyze
 from shadow_architect.core.improver import TestImprover
 from shadow_architect.core.models import Severity, TestSuite
 from shadow_architect.core.reporter import TestReporter
-from shadow_architect.core.validator import TestValidator, ValidationResult
+from shadow_architect.core.validator import TestValidator, ValidationResult, is_ai_product
 from shadow_architect.evaluators.adversarial import AdversarialEvaluator
 from shadow_architect.evaluators.coverage import CoverageEvaluator
 from shadow_architect.evaluators.quality import QualityEvaluator
@@ -149,8 +149,11 @@ def run(
     quality_eval = QualityEvaluator()
     quality_result = quality_eval.evaluate(test_suite.test_files)
 
-    # 4. Adversarial evaluation (optional)
-    if adversarial:
+    # 4. Adversarial evaluation (optional). It probes LLM failure classes, so
+    # it runs only for an AI product - the same test the validator's
+    # adversarial-tests-present criterion uses - or a non-AI product gets a
+    # HIGH finding it can never close and fails --fail-on high.
+    if adversarial and is_ai_product(test_suite):
         adv_eval = AdversarialEvaluator()
         adv_result = adv_eval.evaluate(test_suite)
         # Merge adversarial findings into analysis

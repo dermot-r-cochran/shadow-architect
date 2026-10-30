@@ -19,8 +19,8 @@ These states must never occur. A validation run that leaves any of these uncheck
 | Unacceptable State | How This Boundary Is Enforced |
 |---|---|
 | Prompt injection achieves instruction override | `AdversarialEvaluator`: checks for `PROMPT_INJECTION` category coverage in the test suite. If absent, a HIGH finding is raised. Gate: AI products cannot release without this category covered. |
-| Sensitive data (PII, credentials, system prompt) disclosed via model output | `AdversarialEvaluator`: checks for `SENSITIVE_INFO_DISCLOSURE` and `DATA_EXFILTRATION` categories. Both are CRITICAL severity if uncovered. |
-| Unsafe output (executable code, injection payload) reaches a downstream consumer | `AdversarialEvaluator`: checks for `INSECURE_OUTPUT` category. CRITICAL severity if uncovered. |
+| Sensitive data (PII, credentials, system prompt) disclosed via model output | `AdversarialEvaluator`: checks for `SENSITIVE_INFO_DISCLOSURE` and `DATA_EXFILTRATION` categories. If either is uncovered, the HIGH `adversarial-gaps` finding is raised (the generated test stubs for these categories are marked CRITICAL). |
+| Unsafe output (executable code, injection payload) reaches a downstream consumer | `AdversarialEvaluator`: checks for `INSECURE_OUTPUT` category. If uncovered, the HIGH `adversarial-gaps` finding is raised (the generated test stubs are marked CRITICAL). |
 | Agentic system takes irreversible external action without a human decision gate | `SecurityChaosExperiment`: verifies that credential-absent and permission-denied conditions do not silently succeed. The decision gate itself must be enforced in application code; this experiment confirms it is not bypassed silently. |
 | System fails without surfacing the failure under adversarial input | `CorruptInputExperiment`: verifies that malformed, null, and boundary-value inputs do not produce unhandled exceptions that are silently swallowed. |
 
@@ -46,7 +46,7 @@ These states must never occur at release. The gate does not open while any red-l
 
 **Enforced by**: `AdversarialTestPresenceCriterion` in `core/validator.py`. Finding ID: `adversarial-tests-present`. Severity: HIGH.
 
-Also enforced by: `AdversarialEvaluator` in `evaluators/adversarial.py`, which checks each OWASP LLM Top-10 failure class individually. Finding ID: `adversarial-gaps`. Severity: HIGH.
+Also enforced by: `AdversarialEvaluator` in `evaluators/adversarial.py`, which checks each OWASP LLM Top-10 failure class individually. Finding ID: `adversarial-gaps`. Severity: HIGH. The `run` command applies it only to AI products, by the same keyword test as `AdversarialTestPresenceCriterion` (`is_ai_product` in `core/validator.py`), so a non-AI product never carries this finding.
 
 ---
 

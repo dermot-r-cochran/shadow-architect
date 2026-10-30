@@ -6,7 +6,8 @@ Each test here pins a decision so that a later change cannot quietly undo it.
   console is written: ``tests/test_reporter.py::TestTestReporter::
   test_console_output_has_no_letter_grade``.
 - ADR 002 (gating authority for irreversible decisions): ``--fail-on`` gates
-  on finding severity, never on the score.
+  on finding severity, never on the score, and a non-AI product is not
+  failed by LLM failure classes that do not apply to it.
 - ADR 003 (agentic containment) has no guard: nothing in the code yet tells
   an agentic capability from any other, so there is no behaviour to pin.
 - ADR 004 (epistemic boundaries): no string in ``src/`` and no output of a
@@ -14,7 +15,8 @@ Each test here pins a decision so that a later change cannot quietly undo it.
   The Markdown under ``docs/`` is outside this guard; it has to name the
   very phrases it forbids.
 - ADR 005 (chaos as containment testing): a dry run is not a passing
-  result, and a FAILED experiment is a finding that fails the command.
+  result, a FAILED experiment is a finding that fails the command, and the
+  console shows no pass rate.
 """
 
 from __future__ import annotations
@@ -107,6 +109,44 @@ class TestAdr002GatingOnFindingsNotScore:
     def test_fail_on_critical_blocks_a_suite_with_no_tests(self, runner):
         result = runner.invoke(app, ["run", "--suite", "Empty", "--fail-on", "critical"])
         assert result.exit_code == 1
+
+    def test_ai_product_still_gets_the_adversarial_finding(
+        self, runner, ai_suite_without_adversarial_tests, tmp_path
+    ):
+        out = tmp_path / "report.json"
+        _run(runner, ai_suite_without_adversarial_tests, out)
+        ids = {f["id"] for f in json.loads(out.read_text())["analysis"]["findings"]}
+        assert "adversarial-gaps" in ids
+
+    def test_non_ai_product_gets_no_adversarial_finding_and_passes_fail_on_high(
+        self, runner, ai_suite_without_adversarial_tests, tmp_path
+    ):
+        # The same suite under a product with no AI in it: the LLM failure
+        # classes do not apply, so they must not block the gate.
+        out = tmp_path / "report.json"
+        result = runner.invoke(
+            app,
+            [
+                "run",
+                "--suite",
+                "Ledger",
+                "--product",
+                "Invoice Ledger",
+                "--use-case",
+                "Billing",
+                *ai_suite_without_adversarial_tests,
+                "--output-json",
+                str(out),
+                "--fail-on",
+                "high",
+            ],
+        )
+        report = json.loads(out.read_text())
+        ids = {f["id"] for f in report["analysis"]["findings"]}
+        ids |= {f["id"] for f in report["validation"]["findings"]}
+        assert "adversarial-gaps" not in ids
+        assert "adversarial-tests-present" not in ids
+        assert result.exit_code == 0, result.output
 
 
 # ADR 004 forbids language that implies correctness, completeness, safety
@@ -246,6 +286,16 @@ class TestAdr005DryRunIsNotAResultAndFailedIsAFinding:
         assert result.exit_code == 0
         assert not out.exists()
         assert "PASSED" not in result.output
+
+    def test_screen_output_has_no_pass_rate_but_json_keeps_it(self, runner, tmp_path):
+        # ADR 005 rejects chaos as a percentage metric, so the console shows
+        # counts only; the JSON report keeps pass_rate for machine consumers.
+        out = tmp_path / "chaos.json"
+        result = runner.invoke(app, ["chaos", "--output-json", str(out)])
+        assert result.exit_code == 0, result.output
+        assert "pass rate" not in result.output.lower()
+        assert "%" not in result.output
+        assert "pass_rate" in json.loads(out.read_text())
 
     def test_failed_experiment_fails_the_command(self, runner, monkeypatch, tmp_path):
         def boundary_crossed(self: CorruptInputExperiment) -> None:
