@@ -69,20 +69,19 @@ shared is stated exactly.
   where this tool enforces boundaries on them once deployed. Neither
   repository cites the other today; if one comes to, that is a relationship
   to record here and there.
-- **Siblings by convention:** `careful-memory`, `world-model`, `foundation-model`,
-  `shadow-architect`, `visual-llm`, `swarm`, `Voting` and
-  `architecture-definition-model` all carry a `TestingStrategy.md` that keeps
-  testing mechanics apart from the repository's rules; six run CI coverage as a
-  ratchet at the measured baseline (`swarm`, `careful-memory`, `world-model`,
-  `foundation-model`, `shadow-architect`, `visual-llm`); five keep
-  architecture decision records with guard tests (`swarm`,
-  `careful-memory`, `world-model`, `shadow-architect`, the ADM); here
-  `tests/test_adr_guards.py` guards ADR 002 (gate on finding severity, not
-  the score), ADR 004 (no string in `src/` and no output of a passing run
-  claims correctness, completeness, safety or exhaustiveness) and ADR 005 (a
-  dry run passes nothing; a FAILED experiment fails the command); ADR 001's
-  guard is `tests/test_reporter.py` (no letter grade on the console), and
-  ADR 003 does not yet have one. When a
-  convention here needs changing, those are the reference for how it is done
-  in the account, and a change to the convention itself is worth landing in
-  all of them or in none.
+- **Siblings by convention:** the account's engineering repositories share a
+  way of working, not code: a `TestingStrategy.md` that keeps testing
+  mechanics apart from the repository's rules, a CI coverage ratchet at the
+  measured baseline, and architecture decision records guarded by named tests
+  where a repository keeps them. Which repositories follow which, and how far
+  each one's tests reach its decisions, is listed once, in the map's *Siblings
+  by convention* section, and not restated here: counts copied into several
+  files drift (a list kept in nine files goes stale in some of them). Here
+  `tests/test_adr_guards.py` guards ADR 002 (gate on finding severity, not the
+  score), ADR 004 (no string in `src/` and no output of a passing run claims
+  correctness, completeness, safety or exhaustiveness) and ADR 005 (a dry run
+  passes nothing; a FAILED experiment fails the command); ADR 001's guard is
+  `tests/test_reporter.py` (no letter grade on the console), and ADR 003 does
+  not yet have one. When a convention here needs changing, those are the
+  reference for how it is done in the account, and a change to the convention
+  itself is worth landing in all of them or in none.
