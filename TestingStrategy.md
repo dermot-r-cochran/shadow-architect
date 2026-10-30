@@ -19,7 +19,7 @@ automatically* can be dead for an unknown length of time while looking, from
 the file listing, comprehensively tested. Which makes the top item under
 Known gaps the whole point.
 
-## The suite (`tests/`, pytest — 139 tests across 9 files)
+## The suite (`tests/`, pytest — 151 tests across 10 files)
 
 The tool's own vocabulary is boundary enforcement, and the suite maps onto
 its components:
@@ -33,7 +33,7 @@ its components:
 | `test_improver.py` | the improvement/generation path |
 | `test_azure.py` | Azure-facing integration surfaces |
 | `test_cli.py` | the Typer CLI |
-| `test_adr_guards.py` | ADR guard tests — so far ADR 002 only (`run --fail-on` gates on findings, not the score) |
+| `test_adr_guards.py` | ADR guard tests — ADR 002 (`run --fail-on` gates on findings, not the score), ADR 004 (no string in `src/` and no output of a passing run claims correctness, completeness, safety or exhaustiveness) and ADR 005 (a dry run passes nothing; a FAILED experiment fails the command); ADR 001's guard is in `test_reporter.py`, ADR 003 has none yet |
 | + 2 further files | remaining modules |
 
 Run: `pip install -e ".[dev]"` (or `PYTHONPATH=src`) then `pytest`
