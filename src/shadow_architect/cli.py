@@ -7,12 +7,15 @@ Usage examples::
         --suite "My AI Service" \\
         --product "Azure OpenAI Chat" \\
         --use-case "Conversational AI" \\
-        --test-files tests/test_chat.py tests/test_integration.py \\
-        --source-files src/chat.py src/utils.py \\
+        --test-files tests/test_chat.py --test-files tests/test_integration.py \\
+        --source-files src/chat.py --source-files src/utils.py \\
         --output-json report.json
 
     # Only print a summary without writing a file
     shadow-architect run --suite "Demo" --test-files tests/test_demo.py
+
+    # A directory stands for every .py file under it
+    shadow-architect run --suite "Demo" --test-files tests/ --source-files src/
 
     # Upload the report to Azure Blob Storage
     shadow-architect upload report.json --suite "My AI Service"
@@ -68,6 +71,25 @@ def _fails_on(
     return any(f.severity is Severity.CRITICAL for f in combined.findings)
 
 
+def _expand_directories(paths: list[Path]) -> list[str]:
+    """Replace each directory in *paths* with the ``.py`` files under it.
+
+    The README gates CI with ``--test-files tests/``. A directory was once
+    handed on as though it were a file: nothing could be read from it, so a
+    suite of any size was reported as zero tests, the has-tests red line.
+    Files are found at any depth and listed in sorted order. A path that is
+    a file, or that does not exist, is handed on unchanged, so a declared
+    file that is missing is still reported by the analyzer.
+    """
+    expanded: list[str] = []
+    for path in paths:
+        if path.is_dir():
+            expanded.extend(str(found) for found in sorted(path.rglob("*.py")))
+        else:
+            expanded.append(str(path))
+    return expanded
+
+
 @app.command()
 def run(
     suite: Annotated[str, typer.Option("--suite", "-s", help="Name of the test suite")],
@@ -83,7 +105,7 @@ def run(
         typer.Option(
             "--test-files",
             "-t",
-            help="Paths to test files to analyse",
+            help="Test files to analyse; a directory means every .py file under it",
             exists=False,
         ),
     ] = [],
@@ -92,7 +114,10 @@ def run(
         typer.Option(
             "--source-files",
             "-f",
-            help="Paths to source files (used for coverage estimation)",
+            help=(
+                "Source files (used for coverage estimation); a directory means "
+                "every .py file under it"
+            ),
             exists=False,
         ),
     ] = [],
@@ -131,8 +156,8 @@ def run(
         name=suite,
         product=product,
         use_case=use_case,
-        test_files=[str(f) for f in test_files],
-        source_files=[str(f) for f in source_files],
+        test_files=_expand_directories(test_files),
+        source_files=_expand_directories(source_files),
     )
 
     typer.echo(f"Analysing test suite: {suite}")
@@ -249,7 +274,11 @@ def generate_adversarial(
     use_case: Annotated[str, typer.Option("--use-case", "-u", help="Use case")] = "",
     test_files: Annotated[
         list[Path],
-        typer.Option("--test-files", "-t", help="Existing test files"),
+        typer.Option(
+            "--test-files",
+            "-t",
+            help="Existing test files; a directory means every .py file under it",
+        ),
     ] = [],
     output: Annotated[
         Path | None,
@@ -261,7 +290,7 @@ def generate_adversarial(
         name=suite,
         product=product,
         use_case=use_case,
-        test_files=[str(f) for f in test_files],
+        test_files=_expand_directories(test_files),
     )
 
     evaluator = AdversarialEvaluator()

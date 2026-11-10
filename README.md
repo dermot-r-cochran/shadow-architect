@@ -250,6 +250,8 @@ shadow-architect run --suite "My Service" --test-files tests/ --fail-below 70
 shadow-architect run --suite "My Service" --test-files tests/ --fail-on high
 ```
 
+A directory given to `--test-files` or `--source-files` stands for every `.py` file under it (`tests/test_cli.py::TestDirectoryArguments::test_test_directory_is_read_at_any_depth`). CI runs this gate on this repository's own `tests/`: the *Dogfood the gate* step in `.github/workflows/ci.yml`.
+
 ### Generate adversarial test stubs
 
 ```bash

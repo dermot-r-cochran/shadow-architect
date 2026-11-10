@@ -53,6 +53,15 @@ jobs:
         # 2026-08-24): raise it with the tests that earn it, never lower it.
         run: pytest --cov=shadow_architect --cov-fail-under=89
 
+      - name: Dogfood the gate
+        # The README's own gate command (Quick Start, "Gate CI on constraint
+        # violations"), run on this repository's tests through the installed
+        # console script: a HIGH or CRITICAL finding on the tool's own suite
+        # fails the job. No product context is declared, as in the README's
+        # example, so the product-conditional red lines (R2 and R3 in
+        # docs/BOUNDARIES.md) are not exercised by this step.
+        run: shadow-architect run --suite shadow-architect --test-files tests/ --source-files src/ --fail-on high
+
   lint:
     name: ruff
     runs-on: ubuntu-latest
