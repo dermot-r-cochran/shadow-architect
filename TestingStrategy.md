@@ -19,7 +19,7 @@ automatically* can be dead for an unknown length of time while looking, from
 the file listing, comprehensively tested. Which makes the top item under
 Known gaps the whole point.
 
-## The suite (`tests/`, pytest — 151 tests across 10 files)
+## The suite (`tests/`, pytest — 159 tests across 10 files)
 
 The tool's own vocabulary is boundary enforcement, and the suite maps onto
 its components:
@@ -47,6 +47,23 @@ uncovered boundaries in *other* projects (`quality.py`, `coverage.py`,
 `adversarial.py`). Its own suite should therefore always clear its own bar:
 run the evaluators against this repo's `tests/` when adding checks, and treat
 any finding they raise here as a bug in one or the other.
+
+Since 10 November 2026 CI does this on every run. The *Dogfood the gate* step
+in `ci.yml` runs the README's own gate command on this repository through the
+installed console script:
+`shadow-architect run --suite shadow-architect --test-files tests/ --source-files src/ --fail-on high`.
+A HIGH or CRITICAL finding fails the job. Setting it up found the first bug:
+the README passes a suite as `--test-files tests/`, and a directory was read
+as a file that held nothing, so this suite was reported as zero tests and the
+`has-tests` red line. A directory now stands for every `.py` file under it
+(`tests/test_cli.py`, `TestDirectoryArguments`). Two things the step does not
+show. It declares no product context, as the README's example does not, so
+the red lines that depend on one (R2 and R3 in `docs/BOUNDARIES.md`) are not
+exercised; declared as an Azure product, this suite raises the HIGH
+`security-tests-present` finding and the gate fails, which is recorded under
+Known gaps. And the MEDIUM findings the tool raises here on that day, on two
+conditions (no integration tests, and symbol coverage of 79.5% against the
+80% floor), are tolerable-but-visible states that do not fail the gate.
 
 ## Extending
 
@@ -101,3 +118,15 @@ README cites is renamed or removed, update the row in the same change.
   collects 9; fixed in `core/analyzer.py`, pinned by
   `tests/test_analyzer.py::TestStrategyAnalyzerBasic::test_class_based_tests_are_counted_once`.
 - ~~Coverage unmeasured~~ — the CI ratchet above holds it at ≥89%.
+- **Open, found 2026-11-10 by the dogfood step:** run with `--product Azure`
+  (the tool has an Azure integration), this suite raises the HIGH
+  `security-tests-present` finding, because test types are read from file
+  names and no test file here is named for security or auth. The dogfood step
+  declares no product, so it does not meet this. By the rule above it is a
+  bug in one or the other; which one is not yet decided.
+- **Open, found the same day:** the console lists the validator's findings
+  only. A finding raised by the analyzer or an evaluator alone
+  (`syntax-error-*`, `missing-file-*`, `adversarial-gaps`,
+  `low-symbol-coverage`, the anti-pattern findings) is in the JSON report but
+  not on screen, so `--fail-on high` can exit 1 without the console naming
+  the finding that tripped it.
