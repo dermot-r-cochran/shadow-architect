@@ -260,3 +260,44 @@ class TestUploadCommand:
         result = runner.invoke(app, ["upload", str(report_file)])
         assert result.exit_code == 0
         assert "uploaded" in result.output.lower()
+
+
+class TestConsoleNamesWhatTrippedTheGate:
+    """``--fail-on`` reads the analyzer's and the evaluators' findings as well
+    as the validator's, so the console must list them too: a run that exits 1
+    on ``--fail-on high`` names the HIGH finding on screen, not only in JSON."""
+
+    @staticmethod
+    def _screen(result) -> str:
+        # Rich wraps long lines; compare on collapsed whitespace.
+        return " ".join(result.output.split())
+
+    def test_analyzer_high_finding_is_on_screen(self, runner, test_file, tmp_path):
+        result = runner.invoke(
+            app,
+            [
+                "run",
+                "--suite", "Missing",
+                "--test-files", str(test_file),
+                "--test-files", str(tmp_path / "test_absent.py"),
+                "--fail-on", "high",
+            ],
+        )
+        assert result.exit_code == 1
+        assert "[HIGH] Test file not found" in self._screen(result)
+
+    def test_evaluator_high_finding_is_on_screen(self, runner, test_file):
+        # An AI product with no adversarial tests: the adversarial evaluator
+        # raises its own HIGH finding beside the validator's criterion.
+        result = runner.invoke(
+            app,
+            [
+                "run",
+                "--suite", "AI",
+                "--product", "Azure OpenAI",
+                "--test-files", str(test_file),
+                "--fail-on", "high",
+            ],
+        )
+        assert result.exit_code == 1
+        assert "[HIGH] Adversarial test coverage gaps" in self._screen(result)

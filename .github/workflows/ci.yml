@@ -57,10 +57,12 @@ jobs:
         # The README's own gate command (Quick Start, "Gate CI on constraint
         # violations"), run on this repository's tests through the installed
         # console script: a HIGH or CRITICAL finding on the tool's own suite
-        # fails the job. No product context is declared, as in the README's
-        # example, so the product-conditional red lines (R2 and R3 in
-        # docs/BOUNDARIES.md) are not exercised by this step.
-        run: shadow-architect run --suite shadow-architect --test-files tests/ --source-files src/ --fail-on high
+        # fails the job. Azure is declared as the product (the tool's own
+        # cloud surface), so the security-tests-present red line (R3 in
+        # docs/BOUNDARIES.md) is exercised; tests/test_azure_client_security.py
+        # is the evidence it reads. R2 (adversarial tests for an AI product)
+        # does not apply: "Azure" names no AI capability.
+        run: shadow-architect run --suite shadow-architect --product Azure --test-files tests/ --source-files src/ --fail-on high
 
   lint:
     name: ruff

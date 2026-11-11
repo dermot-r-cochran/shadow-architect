@@ -170,17 +170,20 @@ class TestStrategyAnalyzer:
         """Infer which test types are present from file names and content."""
         # Use only the base file name to avoid false positives from parent
         # directory components (e.g. pytest's tmp_path test-name subdirectory).
-        all_paths = " ".join(
-            Path(p).name for p in analysis.test_files_analyzed
-        ).lower()
+        names = [Path(p).name.lower() for p in analysis.test_files_analyzed]
+        all_paths = " ".join(names)
         detected: list[TestType] = []
         for test_type, keywords in self._TYPE_HINTS.items():
             if any(kw in all_paths for kw in keywords):
                 detected.append(test_type)
 
-        # If no specific type can be inferred, assume unit tests exist when
-        # there are test functions
-        if not detected and analysis.test_count > 0:
+        # A file whose name hints at no type is taken to hold unit tests, when
+        # there are test functions. Judged per file: judged over the whole
+        # suite, one file named for security once made every other file's
+        # tests stop counting as unit tests.
+        all_hints = [kw for kws in self._TYPE_HINTS.values() for kw in kws]
+        unhinted = any(not any(kw in name for kw in all_hints) for name in names)
+        if unhinted and analysis.test_count > 0:
             detected.append(TestType.UNIT)
 
         analysis.test_types_found = list(set(detected))

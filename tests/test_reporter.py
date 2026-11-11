@@ -94,3 +94,13 @@ class TestTestReporter:
         report = TestReport(suite_name="X", product="Y", use_case="Z")
         assert report.grade == "N/A"
         assert report.overall_score == 0.0
+
+    def test_plain_summary_lists_analysis_findings(self, tmp_path, capsys):
+        # The analyzer's findings reach the console, not only the JSON report.
+        suite = TestSuite(name="Missing", test_files=[str(tmp_path / "test_absent.py")])
+        analysis = TestStrategyAnalyzer().analyze(suite)
+        validation = TestValidator().validate(analysis)
+        plan = TestImprover().build_plan(analysis, validation)
+        report = TestReporter().build_report(analysis, validation, plan)
+        TestReporter()._plain_summary(report)
+        assert "[HIGH] Test file not found" in capsys.readouterr().out

@@ -15,7 +15,7 @@ from typing import Any
 
 from shadow_architect.core.analyzer import StrategyAnalysis
 from shadow_architect.core.improver import ImprovementPlan
-from shadow_architect.core.models import Severity
+from shadow_architect.core.models import Finding, Severity
 from shadow_architect.core.validator import ValidationResult
 
 
@@ -167,6 +167,21 @@ class TestReporter:
         except ImportError:
             self._plain_summary(report)
 
+    @staticmethod
+    def _console_findings(report: TestReport) -> list[Finding]:
+        """Every finding ``run --fail-on`` reads: the validator's, then the
+        analyzer's and the evaluators'.
+
+        The console once listed the validator's findings only, so a run could
+        exit 1 on ``--fail-on high`` with nothing HIGH on screen.
+        """
+        findings: list[Finding] = []
+        if report.validation:
+            findings.extend(report.validation.findings)
+        if report.analysis:
+            findings.extend(report.analysis.findings)
+        return findings
+
     # ------------------------------------------------------------------
     def _rich_summary(self, console: Any, report: TestReport) -> None:
         from rich.panel import Panel
@@ -204,9 +219,12 @@ class TestReporter:
             )
             console.print(tbl)
 
-        if report.validation and report.validation.findings:
+        findings = self._console_findings(report)
+        if findings:
+            from rich.markup import escape
+
             console.print("\n[bold red]Findings[/bold red]")
-            for f in report.validation.findings:
+            for f in findings:
                 sev_color = {
                     Severity.CRITICAL: "red",
                     Severity.HIGH: "orange3",
@@ -216,7 +234,7 @@ class TestReporter:
                 }.get(f.severity, "white")
                 console.print(
                     f"  [{sev_color}][{f.severity.value.upper()}][/{sev_color}] "
-                    f"{f.title}: {f.description}"
+                    f"{escape(f.title)}: {escape(f.description)}"
                 )
 
         if report.improvement_plan and report.improvement_plan.recommendations:
@@ -236,9 +254,10 @@ class TestReporter:
                   f"Assertions: {report.analysis.assertion_count}  "
                   f"Density: {report.analysis.assertion_density:.2f}")
 
-        if report.validation and report.validation.findings:
+        findings = self._console_findings(report)
+        if findings:
             print("\nFindings:")
-            for f in report.validation.findings:
+            for f in findings:
                 print(f"  [{f.severity.value.upper()}] {f.title}")
 
         if report.improvement_plan and report.improvement_plan.recommendations:
