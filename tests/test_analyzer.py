@@ -104,6 +104,27 @@ class TestStrategyAnalyzerBasic:
         result = analyzer.analyze(suite)
         assert TestType.UNIT in result.test_types_found
 
+    def test_unhinted_files_still_count_as_unit_beside_a_security_file(
+        self, analyzer, tmp_path
+    ):
+        # Unit tests are inferred per file: one file named for security does
+        # not stop the others counting as unit tests.
+        plain = tmp_path / "test_maths.py"
+        plain.write_text("def test_add():\n    assert 1 + 1 == 2\n")
+        secure = tmp_path / "test_client_security.py"
+        secure.write_text("def test_no_secret_echoed():\n    assert 'x' != 'y'\n")
+        suite = TestSuite(name="Mixed", test_files=[str(plain), str(secure)])
+        found = analyzer.analyze(suite).test_types_found
+        assert TestType.UNIT in found
+        assert TestType.SECURITY in found
+
+    def test_only_hinted_files_infer_no_unit_tests(self, analyzer, tmp_path):
+        secure = tmp_path / "test_client_security.py"
+        secure.write_text("def test_no_secret_echoed():\n    assert 'x' != 'y'\n")
+        suite = TestSuite(name="Security only", test_files=[str(secure)])
+        found = analyzer.analyze(suite).test_types_found
+        assert found == [TestType.SECURITY]
+
     def test_mock_count_detected(self, analyzer, unit_test_file):
         suite = TestSuite(name="Mocked", test_files=[str(unit_test_file)])
         result = analyzer.analyze(suite)
