@@ -144,3 +144,13 @@ README cites is renamed or removed, update the row in the same change.
   `low-symbol-coverage`, the anti-pattern findings) is in the JSON report but
   not on screen, so `--fail-on high` can exit 1 without the console naming
   the finding that tripped it.
+- **Found and closed 2026-11-14:** `shadow-architect upload report.json`
+  stored a blob with no findings in it. The command rebuilt the report from
+  four fields of the file (suite name, product, use case, metadata), so the
+  blob carried an empty `analysis` and `validation`, a score of 0.0 and the
+  time of the upload, whatever the run had reported. The suite did not see it
+  because the only upload tests checked the blob's name and the word
+  "uploaded" on screen. The command now stores the file as `run` wrote it
+  (`tests/test_cli.py::TestUploadCommand::test_upload_stores_the_report_run_wrote`),
+  and `--suite` names the blob without touching its content
+  (`test_suite_option_names_the_blob_only`, same class).

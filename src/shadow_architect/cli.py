@@ -248,22 +248,20 @@ def upload(
 ) -> None:
     """Upload a JSON report to Azure Blob Storage."""
     from shadow_architect.azure.storage import StorageClient
-    from shadow_architect.core.reporter import TestReport
 
     if not report_path.exists():
         typer.echo(f"Error: report file not found: {report_path}", err=True)
         raise typer.Exit(code=1)
 
+    # The file is stored as it stands. It was once rebuilt from its suite
+    # name, product, use case and metadata alone, so the blob held no
+    # findings and a score of 0.0 whatever the run had reported.
     data = json.loads(report_path.read_text(encoding="utf-8"))
-    report = TestReport(
-        suite_name=suite or data.get("suite_name", "unknown"),
-        product=data.get("product", ""),
-        use_case=data.get("use_case", ""),
-        metadata=data.get("metadata", {}),
-    )
 
     client = StorageClient(account_url=account_url)
-    blob_name = client.upload_report(report)
+    blob_name = client.upload_report_data(
+        suite or data.get("suite_name", "unknown"), data
+    )
     typer.echo(f"Report uploaded: {blob_name}")
 
 

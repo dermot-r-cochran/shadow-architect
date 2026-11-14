@@ -27,7 +27,7 @@ It operates on Python test suites and system artefacts to:
 | 🚧 **Enforce boundaries** | Check whether declared system constraints are violated — not whether a score threshold is met | `tests/test_validator.py::TestTestValidator::test_adversarial_criterion_applicable_to_ai_product` |
 | ⚠️ **Surface failure classes** | Identify which OWASP LLM Top-10 failure classes are uncontained in the current suite | `tests/test_evaluators.py::TestAdversarialEvaluator::test_empty_suite_flags_all_categories` |
 | 🔒 **Gate decisions** | Block or escalate when irreversible, externally-visible, or autonomy-expanding decisions lack required evidence | `tests/test_adr_guards.py::TestAdr002GatingOnFindingsNotScore::test_fail_on_high_blocks_ai_product_without_adversarial_tests` |
-| ☁️ **Azure integration** | Upload constraint-violation reports to Azure Blob Storage; create work items for CRITICAL/HIGH findings in Azure DevOps | `tests/test_azure.py::TestStorageClient::test_upload_report_returns_blob_name`, `tests/test_azure.py::TestDevOpsClient::test_create_work_items_for_high_findings` |
+| ☁️ **Azure integration** | Upload constraint-violation reports to Azure Blob Storage; create work items for CRITICAL/HIGH findings in Azure DevOps | `tests/test_azure.py::TestStorageClient::test_upload_report_returns_blob_name`, `tests/test_cli.py::TestUploadCommand::test_upload_stores_the_report_run_wrote`, `tests/test_azure.py::TestDevOpsClient::test_create_work_items_for_high_findings` |
 | 🤖 **Containment stubs** | Generate test stubs for uncovered adversarial failure classes | `tests/test_cli.py::TestGenerateAdversarialCommand::test_generates_stubs_to_file` |
 
 Every row in this README that claims a capability names the test that proves it (file and test name), or says "not yet implemented", or "no test yet"; `.github/scripts/check_docs.py` fails CI if a named test does not exist.
@@ -270,6 +270,8 @@ export AZURE_STORAGE_ACCOUNT_URL="https://<account>.blob.core.windows.net"
 shadow-architect upload report.json --suite "My AI Service"
 ```
 
+The blob is the report file as `run --output-json` wrote it, findings included (`tests/test_cli.py::TestUploadCommand::test_upload_stores_the_report_run_wrote`); `--suite` changes the blob's name, not its content.
+
 ---
 
 ## Architecture
@@ -306,7 +308,7 @@ shadow_architect/
 
 | Service | Use | Proved by |
 |---|---|---|
-| Azure Blob Storage | Store constraint-violation reports | `tests/test_azure.py::TestStorageClient::test_upload_report_returns_blob_name` |
+| Azure Blob Storage | Store constraint-violation reports | `tests/test_azure.py::TestStorageClient::test_upload_report_returns_blob_name`, `tests/test_cli.py::TestUploadCommand::test_upload_stores_the_report_run_wrote` |
 | Azure DevOps Test Plans | Publish gate results | `tests/test_azure.py::TestDevOpsClient::test_publish_test_run_returns_dict` |
 | Azure DevOps Work Items | Create Bugs for CRITICAL/HIGH constraint violations | `tests/test_azure.py::TestDevOpsClient::test_create_work_items_for_high_findings` |
 | Azure Monitor | (recommended) Push boundary metrics via OpenTelemetry | not yet implemented |

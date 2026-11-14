@@ -60,12 +60,24 @@ class StorageClient:
         The blob is named ``<suite>/<timestamp>.json`` so that reports are
         naturally ordered by time within a suite prefix.
         """
+        return self.upload_report_data(report.suite_name, report.to_dict())
+
+    def upload_report_data(self, suite_name: str, data: dict[str, Any]) -> str:
+        """Upload a report that is already a dictionary; return the blob name.
+
+        For a report read back from the JSON file ``run --output-json`` wrote.
+        *data* is stored as it stands, so the blob holds the findings, the
+        score and the ``generated_at`` of the run that produced it;
+        *suite_name* names the blob only. The ``upload`` command once rebuilt
+        a :class:`TestReport` from four fields of the file, and the blob it
+        stored held no findings.
+        """
         timestamp = datetime.now(tz=timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        safe_name = report.suite_name.replace(" ", "_").replace("/", "-")
+        safe_name = suite_name.replace(" ", "_").replace("/", "-")
         blob_name = f"{safe_name}/{timestamp}.json"
 
-        data = json.dumps(report.to_dict(), indent=2, default=str).encode("utf-8")
-        self._client.upload_blob(name=blob_name, data=BytesIO(data), overwrite=True)
+        payload = json.dumps(data, indent=2, default=str).encode("utf-8")
+        self._client.upload_blob(name=blob_name, data=BytesIO(payload), overwrite=True)
         return blob_name
 
     def list_reports(self, suite_name: str | None = None) -> list[str]:

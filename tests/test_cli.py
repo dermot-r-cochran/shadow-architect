@@ -261,6 +261,59 @@ class TestUploadCommand:
         assert result.exit_code == 0
         assert "uploaded" in result.output.lower()
 
+    @pytest.fixture()
+    def stored(self, monkeypatch) -> dict[str, dict]:
+        """Every blob the in-memory stub is handed, by blob name."""
+        from shadow_architect.azure import storage
+
+        monkeypatch.setenv("SHADOW_ARCHITECT_MOCK_AZURE", "1")
+        blobs: dict[str, dict] = {}
+        upload_blob = storage._MockBlobContainerClient.upload_blob
+
+        def recording(self, name, data, overwrite=False):
+            upload_blob(self, name, data, overwrite)
+            blobs[name] = json.loads(self._store[name])
+
+        monkeypatch.setattr(storage._MockBlobContainerClient, "upload_blob", recording)
+        return blobs
+
+    @pytest.fixture()
+    def report_file(self, runner, test_file, tmp_path) -> Path:
+        """A report as ``run --output-json`` writes it, findings included."""
+        out = tmp_path / "report.json"
+        result = runner.invoke(
+            app,
+            [
+                "run",
+                "--suite", "Upload Suite",
+                "--product", "Azure OpenAI",
+                "--test-files", str(test_file),
+                "--output-json", str(out),
+            ],
+        )
+        assert result.exit_code == 0
+        return out
+
+    def test_upload_stores_the_report_run_wrote(self, runner, report_file, stored):
+        # The blob is the stored record of the run. It once held the suite
+        # name, product, use case and metadata only: no findings, score 0.0.
+        written = json.loads(report_file.read_text())
+        assert written["validation"]["findings"]
+        assert written["analysis"]["findings"]
+
+        result = runner.invoke(app, ["upload", str(report_file)])
+
+        assert result.exit_code == 0
+        assert list(stored.values()) == [written]
+
+    def test_suite_option_names_the_blob_only(self, runner, report_file, stored):
+        result = runner.invoke(app, ["upload", str(report_file), "--suite", "Renamed"])
+
+        assert result.exit_code == 0
+        (blob_name, blob), = stored.items()
+        assert blob_name.startswith("Renamed/")
+        assert blob == json.loads(report_file.read_text())
+
 
 class TestConsoleNamesWhatTrippedTheGate:
     """``--fail-on`` reads the analyzer's and the evaluators' findings as well

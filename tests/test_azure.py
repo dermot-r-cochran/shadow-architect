@@ -76,6 +76,22 @@ class TestStorageClient:
         data = storage_client.download_report(blob_name)
         assert data["suite_name"] == "Azure Test Suite"
 
+    def test_upload_report_keeps_the_findings(self, storage_client, report_with_findings):
+        blob_name = storage_client.upload_report(report_with_findings)
+        data = storage_client.download_report(blob_name)
+        assert data == report_with_findings.to_dict()
+        assert data["validation"]["findings"]
+
+    def test_upload_report_data_stores_the_dictionary_as_given(self, storage_client):
+        report = {
+            "suite_name": "As Written",
+            "overall_score": 41.5,
+            "validation": {"findings": [{"id": "has-tests", "severity": "critical"}]},
+        }
+        blob_name = storage_client.upload_report_data("Blob Name", report)
+        assert blob_name.startswith("Blob_Name/")
+        assert storage_client.download_report(blob_name) == report
+
 
 # ---------------------------------------------------------------------------
 # DevOpsClient
