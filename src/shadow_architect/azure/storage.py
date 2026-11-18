@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from io import BytesIO
 from typing import Any
 
@@ -72,7 +72,7 @@ class StorageClient:
         a :class:`TestReport` from four fields of the file, and the blob it
         stored held no findings.
         """
-        timestamp = datetime.now(tz=timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        timestamp = datetime.now(tz=UTC).strftime("%Y%m%dT%H%M%SZ")
         safe_name = suite_name.replace(" ", "_").replace("/", "-")
         blob_name = f"{safe_name}/{timestamp}.json"
 

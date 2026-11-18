@@ -7,7 +7,7 @@ name = "shadow-architect"
 version = "0.1.0"
 description = "System-level guardrail enforcement for AI systems on Azure Cloud — surfaces constraint violations and gates decisions at defined system boundaries"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = [
     "azure-storage-blob>=12.19.0",
@@ -54,8 +54,13 @@ src = ["src"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
+# UP042 (str + Enum -> StrEnum) became reachable when the floor rose to 3.11
+# on 2026-11-18. It is not a pure rewrite: StrEnum changes str() and
+# format() of a member, which reaches report text and CLI choices, so it is
+# left for a change of its own rather than taken with the version bump.
+ignore = ["UP042"]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 strict = true
 ignore_missing_imports = true
