@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -28,7 +28,7 @@ class ChaosResult(BaseModel):
     error_details: str | None = None
     observations: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class ChaosReport(BaseModel):
@@ -41,7 +41,7 @@ class ChaosReport(BaseModel):
     skipped: int = 0
     total_duration_seconds: float = 0.0
     results: list[ChaosResult] = Field(default_factory=list)
-    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @property
     def pass_rate(self) -> float:

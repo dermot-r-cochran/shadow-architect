@@ -97,7 +97,7 @@ README cites is renamed or removed, update the row in the same change.
 - ~~No CI~~ — **closed 2026-08-24, the day after this document argued for
   it**: `.github/workflows/ci.yml` runs `python -m compileall src` (the parse
   gate that would have caught the incident on day one), pytest on Python
-  3.10/3.13 with a coverage ratchet at the measured 89% baseline, and a
+  3.11/3.15 with a coverage ratchet at the measured 89% baseline, and a
   `ruff check .` job — added green, the outstanding 32 findings fixed in the
   same change. One of those findings was a real bug, not style: the CLI
   computed the coverage evaluation and then discarded it, so reports silently

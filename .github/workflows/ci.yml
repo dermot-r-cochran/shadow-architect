@@ -25,8 +25,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The declared floor (3.10) and current stable.
-        python-version: ["3.10", "3.13"]
+        # The declared floor (3.11) and current stable.
+        python-version: ["3.11", "3.15"]
 
     steps:
       - name: Checkout
@@ -74,7 +74,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.15"
 
       - name: Install ruff
         run: python -m pip install ruff
@@ -92,7 +92,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.15"
           cache: pip
 
       - name: Install
@@ -114,7 +114,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.15"
 
       - name: Check README and docs
         # Standard library only: relative links resolve, at most one

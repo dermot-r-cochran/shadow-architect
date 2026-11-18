@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-**shadow-architect** enforces system-level guardrails on AI systems deployed to Azure. It analyses Python test suites and system artefacts, surfaces constraint violations (missing adversarial coverage, absent isolation, unchecked failure modes), and gates decisions at defined boundaries — it is deliberately *not* a test-quality scorer (see ADR 001). Packaged as a library plus a Typer CLI (`shadow-architect`, entry point `shadow_architect.cli:app`). Python ≥3.10, `src/` layout.
+**shadow-architect** enforces system-level guardrails on AI systems deployed to Azure. It analyses Python test suites and system artefacts, surfaces constraint violations (missing adversarial coverage, absent isolation, unchecked failure modes), and gates decisions at defined boundaries — it is deliberately *not* a test-quality scorer (see ADR 001). Packaged as a library plus a Typer CLI (`shadow-architect`, entry point `shadow_architect.cli:app`). Python ≥3.11, `src/` layout.
 
 ## Commands
 
@@ -21,7 +21,7 @@ python .github/scripts/check_docs.py  # CI's doc check — links, front matter, 
 shadow-architect run --suite shadow-architect --product Azure --test-files tests/ --source-files src/ --fail-on high  # CI's dogfood step — the tool's own gate on its own tests
 ```
 
-CI (`.github/workflows/ci.yml`) runs the parse gate, pytest with the coverage ratchet and the dogfood step (`run --fail-on high` on this repository's own `tests/`) on Python 3.10 and 3.13, `ruff check .`, `mypy src/`, and the doc check. Every README capability claim names the test that proves it, or says "not yet implemented" or "no test yet" — never cite a test that does not exist. The suite needs no live Azure credentials — set `SHADOW_ARCHITECT_MOCK_AZURE=1` to run any Azure-facing code without them. Testing mechanics, the incident the CI exists because of, and how to extend the suite are in `TestingStrategy.md`; two rules from it worth repeating: a new evaluator lands with tests for both verdicts plus a malformed-input case (the tool parses arbitrary user projects), and when editing docstrings replace rather than stack — stacked-duplicate docstrings once made four source files unparseable and killed the whole suite silently.
+CI (`.github/workflows/ci.yml`) runs the parse gate, pytest with the coverage ratchet and the dogfood step (`run --fail-on high` on this repository's own `tests/`) on Python 3.11 and 3.15, `ruff check .`, `mypy src/`, and the doc check. Every README capability claim names the test that proves it, or says "not yet implemented" or "no test yet" — never cite a test that does not exist. The suite needs no live Azure credentials — set `SHADOW_ARCHITECT_MOCK_AZURE=1` to run any Azure-facing code without them. Testing mechanics, the incident the CI exists because of, and how to extend the suite are in `TestingStrategy.md`; two rules from it worth repeating: a new evaluator lands with tests for both verdicts plus a malformed-input case (the tool parses arbitrary user projects), and when editing docstrings replace rather than stack — stacked-duplicate docstrings once made four source files unparseable and killed the whole suite silently.
 
 ## Architecture
 
