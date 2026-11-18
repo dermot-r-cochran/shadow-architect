@@ -233,7 +233,7 @@ or, in that project's `pyproject.toml`:
 dependencies = ["shadow-architect @ git+https://github.com/dermot-r-cochran/shadow-architect@v0.1.0"]
 ```
 
-No release is tagged yet; the first, `v0.1.0`, is owed. Until it is pushed, put a commit SHA in place of `v0.1.0`.
+The tag shown is an example: no release is tagged yet, so until one is, put a commit SHA in place of `v0.1.0`.
 
 ### Analyse a test suite
 

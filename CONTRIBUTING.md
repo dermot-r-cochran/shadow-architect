@@ -4,7 +4,7 @@ Contributions are welcome: bug reports, fixes, tests, documentation and focused 
 
 ## Before you start
 
-- For anything beyond a small fix, open an issue first describing the problem and the change you have in mind, so the approach can be agreed before you spend time on it.
+- For anything beyond a small fix, you may find it useful to open an issue first describing the problem and the change you have in mind, before you spend time on it.
 - Read ADRs 001 to 005 and `docs/BOUNDARIES.md`. In short: this tool enforces boundaries and gates, it does not grade quality, and **no output, doc or docstring may claim correctness, completeness, exhaustiveness or safety** (ADR 004).
 - A change to a check updates `docs/BOUNDARIES.md` in the same pull request.
 
