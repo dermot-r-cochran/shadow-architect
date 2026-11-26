@@ -19,7 +19,7 @@ automatically* can be dead for an unknown length of time while looking, from
 the file listing, comprehensively tested. Which makes the top item under
 Known gaps the whole point.
 
-## The suite (`tests/`, pytest — 159 tests across 10 files)
+## The suite (`tests/`, pytest — 186 tests across 11 files)
 
 The tool's own vocabulary is boundary enforcement, and the suite maps onto
 its components:
@@ -34,7 +34,7 @@ its components:
 | `test_azure.py` | Azure-facing integration surfaces |
 | `test_cli.py` | the Typer CLI |
 | `test_adr_guards.py` | ADR guard tests — ADR 002 (`run --fail-on` gates on findings, not the score), ADR 004 (no string in `src/` and no output of a passing run claims correctness, completeness, safety or exhaustiveness) and ADR 005 (a dry run passes nothing; a FAILED experiment fails the command); ADR 001's guard is in `test_reporter.py`, ADR 003 has none yet |
-| + 2 further files | remaining modules |
+| + 3 further files | remaining modules |
 
 Run: `pip install -e ".[dev]"` (or `PYTHONPATH=src`) then `pytest`
 (config in `pyproject.toml`). The suite runs without live Azure credentials —
@@ -154,3 +154,20 @@ README cites is renamed or removed, update the row in the same change.
   (`tests/test_cli.py::TestUploadCommand::test_upload_stores_the_report_run_wrote`),
   and `--suite` names the blob without touching its content
   (`test_suite_option_names_the_blob_only`, same class).
+- **Found and closed 2026-11-26:** the README's row for Azure DevOps work
+  items cited a test that asserted only that a list came back, which an empty
+  list meets, so nothing in the suite showed that a Bug is raised. Three
+  tests in `tests/test_azure.py` (`TestDevOpsClient`) now do, and no source
+  changed: `test_create_work_items_for_high_findings` (the one HIGH finding
+  of a real run becomes one Bug with that finding's title and description,
+  at priority 2), `test_one_bug_per_high_or_critical_finding` (one Bug each
+  for a HIGH and a CRITICAL finding, in the report's order, CRITICAL at
+  priority 1, and none for MEDIUM, LOW or INFO) and
+  `test_work_items_are_bugs_in_the_configured_project` (the type asked for
+  is Bug, in the client's project).
+- **Open, not yet decided:** work items are raised for the validator's
+  findings only. A finding raised by the analyzer or an evaluator alone gets
+  none, so an unparseable test file (R4 in `docs/BOUNDARIES.md`,
+  `syntax-error-*`, HIGH) is a red line with no Bug. The three tests above
+  use reports with no HIGH analyzer finding, so they hold whichever way this
+  is decided.

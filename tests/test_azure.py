@@ -7,8 +7,9 @@ import pytest
 from shadow_architect.azure.client import _MockCredential, get_credential
 from shadow_architect.azure.devops import DevOpsClient
 from shadow_architect.azure.storage import StorageClient
-from shadow_architect.core.models import TestSuite
+from shadow_architect.core.models import Finding, Severity, TestSuite
 from shadow_architect.core.reporter import TestReport
+from shadow_architect.core.validator import ValidationResult
 
 # ---------------------------------------------------------------------------
 # AzureClient
@@ -129,6 +130,52 @@ def report_with_findings(tmp_path):
     return reporter.build_report(analysis, validation, plan)
 
 
+def _finding(title: str, severity: Severity) -> Finding:
+    return Finding(
+        id=title.lower().replace(" ", "-"),
+        title=title,
+        description=f"{title}, described.",
+        severity=severity,
+        category="coverage",
+    )
+
+
+def _report_with(findings: list[Finding]) -> TestReport:
+    """A report whose validator raised exactly *findings*.
+
+    It carries no analysis, so the tests that use it say nothing on whether a
+    finding raised by the analyzer or an evaluator alone should become a work
+    item too: today it does not, and that is not yet decided.
+    """
+    return TestReport(
+        suite_name="DevOps Suite",
+        product="Demo Service",
+        use_case="API",
+        validation=ValidationResult(passed=False, score=0.0, findings=findings),
+    )
+
+
+@pytest.fixture()
+def work_item_calls(monkeypatch) -> list[dict]:
+    """Every ``create_work_item`` call the in-memory stub is handed.
+
+    The stub ignores the work item type and the project, so what the client
+    asked for is read here. The recorder has no defaults of its own: an
+    argument the client leaves out is recorded as ``None``.
+    """
+    from shadow_architect.azure import devops
+
+    calls: list[dict] = []
+    create_work_item = devops._MockDevOpsServiceClient.create_work_item
+
+    def recording(self, document, project=None, type=None):
+        calls.append({"document": document, "project": project, "type": type})
+        return create_work_item(self, document)
+
+    monkeypatch.setattr(devops._MockDevOpsServiceClient, "create_work_item", recording)
+    return calls
+
+
 class TestDevOpsClient:
     def test_publish_test_run_returns_dict(
         self, devops_client, report_with_findings
@@ -140,9 +187,64 @@ class TestDevOpsClient:
     def test_create_work_items_for_high_findings(
         self, devops_client, report_with_findings
     ):
+        # A real run: one test, an API product and no security test, so the
+        # validator raises one HIGH finding beside a MEDIUM one. This test
+        # once asserted only that a list came back, which an empty list met.
+        findings = report_with_findings.validation.findings
+        assert {f.id: f.severity for f in findings} == {
+            "integration-tests-present": Severity.MEDIUM,
+            "security-tests-present": Severity.HIGH,
+        }
+        (security,) = [f for f in findings if f.severity is Severity.HIGH]
+
         items = devops_client.create_work_items_for_findings(report_with_findings)
-        # There should be at least some HIGH findings from missing test types
-        assert isinstance(items, list)
+
+        assert [item["fields"] for item in items] == [
+            {
+                "System.Title": f"[shadow-architect] {security.title}",
+                "System.Description": security.description,
+                "Microsoft.VSTS.Common.Priority": 2,
+            }
+        ]
+
+    def test_one_bug_per_high_or_critical_finding(self, devops_client):
+        report = _report_with(
+            [
+                _finding("Medium gap", Severity.MEDIUM),
+                _finding("High gap", Severity.HIGH),
+                _finding("Info note", Severity.INFO),
+                _finding("Critical gap", Severity.CRITICAL),
+                _finding("Low gap", Severity.LOW),
+            ]
+        )
+
+        items = devops_client.create_work_items_for_findings(report)
+
+        # One per HIGH or CRITICAL finding, in the report's order, none for
+        # the rest; CRITICAL is priority 1 and HIGH priority 2.
+        assert [item["fields"] for item in items] == [
+            {
+                "System.Title": "[shadow-architect] High gap",
+                "System.Description": "High gap, described.",
+                "Microsoft.VSTS.Common.Priority": 2,
+            },
+            {
+                "System.Title": "[shadow-architect] Critical gap",
+                "System.Description": "Critical gap, described.",
+                "Microsoft.VSTS.Common.Priority": 1,
+            },
+        ]
+
+    def test_work_items_are_bugs_in_the_configured_project(self, work_item_calls):
+        client = DevOpsClient(project="Guardrails", use_mock=True)
+
+        client.create_work_items_for_findings(
+            _report_with([_finding("High gap", Severity.HIGH)])
+        )
+
+        assert [(call["type"], call["project"]) for call in work_item_calls] == [
+            ("Bug", "Guardrails")
+        ]
 
     def test_no_work_items_when_no_validation(self, devops_client):
         report = TestReport(suite_name="X", product="Y", use_case="Z")
